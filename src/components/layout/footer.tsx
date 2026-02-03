@@ -1,5 +1,8 @@
+'use client';
+
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -10,7 +13,11 @@ const navLinks = [
 ];
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
+  const [currentYear, setCurrentYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
 
   return (
     <footer className="bg-secondary">
@@ -43,7 +50,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {currentYear} Boku Partners. All rights reserved.</p>
+          {currentYear && <p>&copy; {currentYear} Boku Partners. All rights reserved.</p>}
         </div>
       </div>
     </footer>

@@ -1,37 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ArrowRight, Briefcase, BrainCircuit, HandCoins, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-
-const services = [
-  {
-    title: 'Advise & Design',
-    description: 'Assess, strategize, and transform core functions for optimal performance and growth.',
-    icon: <Briefcase className="w-8 h-8 text-primary" />,
-    link: '/services#advise-design',
-  },
-  {
-    title: 'Finance & Accounting',
-    description: 'Ensure fiscal health and operational efficiency with our comprehensive financial services.',
-    icon: <HandCoins className="w-8 h-8 text-primary" />,
-    link: '/services#finance-accounting',
-  },
-  {
-    title: 'Human Resources',
-    description: 'Build a thriving and compliant workforce with our HR advisory and operational support.',
-    icon: <Users className="w-8 h-8 text-primary" />,
-    link: '/services#human-resources',
-  },
-  {
-    title: 'Marketing & AI',
-    description: 'Accelerate your market presence and drive growth with digital marketing and AI solutions.',
-    icon: <BrainCircuit className="w-8 h-8 text-primary" />,
-    link: '/services#marketing-ai',
-  },
-];
+import { ServicesTabs } from './_components/services-tabs';
 
 const features = [
     {
@@ -99,67 +70,7 @@ export default function Home() {
               Solutions designed to meet the evolving needs of your business.
             </p>
           </div>
-
-          <div className="md:hidden">
-            <Carousel
-              opts={{
-                align: 'start',
-              }}
-              className="w-full max-w-sm mx-auto"
-            >
-              <CarouselContent>
-                {services.map((service, index) => (
-                  <CarouselItem key={index} className="basis-11/12">
-                    <div className="p-1 h-full">
-                      <Card className="h-full flex flex-col group hover:border-primary transition-all duration-300 shadow-md hover:shadow-xl">
-                        <CardHeader className="flex flex-col items-center text-center">
-                          <div className="p-4 bg-primary/10 rounded-full mb-4">
-                            {service.icon}
-                          </div>
-                          <CardTitle className="font-headline text-xl">{service.title}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center flex-grow">
-                          <p className="text-muted-foreground text-sm min-h-[6rem]">
-                            {service.description}
-                          </p>
-                        </CardContent>
-                        <CardFooter className="justify-center pt-0">
-                          <Button variant="link" asChild className="font-semibold text-primary">
-                            <Link href={service.link}>Learn More <ArrowRight className="w-4 h-4 ml-2" /></Link>
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden sm:inline-flex" />
-              <CarouselNext className="hidden sm:inline-flex" />
-            </Carousel>
-          </div>
-
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {services.map((service, index) => (
-              <Card key={index} className="h-full flex flex-col group hover:border-primary transition-all duration-300 transform hover:-translate-y-1 shadow-md hover:shadow-xl">
-                <CardHeader className="flex flex-col items-center text-center">
-                  <div className="p-4 bg-primary/10 rounded-full mb-4">
-                    {service.icon}
-                  </div>
-                  <CardTitle className="font-headline text-xl">{service.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center flex-grow">
-                  <p className="text-muted-foreground text-sm min-h-[8rem]">
-                    {service.description}
-                  </p>
-                </CardContent>
-                <CardFooter className="justify-center pt-0">
-                  <Button variant="link" asChild className="font-semibold text-primary">
-                    <Link href={service.link}>Learn More <ArrowRight className="w-4 h-4 ml-2" /></Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+          <ServicesTabs />
         </div>
       </section>
 

@@ -49,7 +49,7 @@ export function ServicesTabs() {
     <Tabs defaultValue="advise-design" className="w-full">
       <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-4 h-auto">
         {services.map((service) => (
-          <TabsTrigger key={service.id} value={service.id} className="font-headline py-2 data-[state=active]:shadow-md">
+          <TabsTrigger key={service.id} value={service.id} className="font-headline py-2 data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             {service.title}
           </TabsTrigger>
         ))}
@@ -58,9 +58,9 @@ export function ServicesTabs() {
         <TabsContent key={service.id} value={service.id} className="pt-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {service.subServices.map((subService) => (
-              <Card key={subService.title} className="h-full flex flex-col">
+              <Card key={subService.title} className="group h-full flex flex-col cursor-pointer transition-all duration-300 hover:border-primary hover:shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-xl font-headline">{subService.title}</CardTitle>
+                  <CardTitle className="text-xl font-headline group-hover:text-primary transition-colors">{subService.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <p className="text-muted-foreground">{subService.description}</p>

@@ -1,6 +1,7 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const services = [
@@ -58,13 +59,16 @@ export function ServicesTabs() {
         <TabsContent key={service.id} value={service.id} className="pt-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {service.subServices.map((subService) => (
-              <Card key={subService.title} className="group h-full flex flex-col cursor-pointer transition-all duration-300 hover:border-primary hover:shadow-lg">
+              <Card key={subService.title} className="group h-full flex flex-col cursor-pointer transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-xl font-headline group-hover:text-primary transition-colors">{subService.title}</CardTitle>
+                  <CardTitle className="text-xl font-headline">{subService.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <p className="text-muted-foreground">{subService.description}</p>
+                  <p className="text-muted-foreground group-hover:text-primary-foreground/90 transition-colors">{subService.description}</p>
                 </CardContent>
+                <CardFooter className="pt-4 justify-end">
+                    <ArrowRight className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </CardFooter>
               </Card>
             ))}
           </div>

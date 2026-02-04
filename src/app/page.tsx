@@ -24,7 +24,7 @@ export default function Home() {
 
   return (
     <div>
-      <section>
+      <section className="pt-8">
         <div className="container mx-auto px-4">
           <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
             {heroImage && (
@@ -80,7 +80,7 @@ export default function Home() {
 
        <section className="container mx-auto px-4">
         <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-headline font-semibold">Why Boku Partners?</h2>
+            <h2 className="text-3xl font-headline font-semibold">Why Boku Partners?</h2>
             <p className="text-muted-foreground text-lg mt-2">Achieve more with a partner that understands your vision.</p>
         </div>
         <div className="grid md:grid-cols-3 gap-8 text-center">

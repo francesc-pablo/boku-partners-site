@@ -1,8 +1,13 @@
+import Image from 'next/image';
+
 export function Logo() {
   return (
-    <div className="flex items-center justify-center" aria-label="Boku Partners Logo">
-        <span className="font-headline font-bold text-2xl tracking-tight text-foreground">Boku</span>
-        <span className="font-headline font-bold text-2xl tracking-tight text-primary">Partners</span>
-    </div>
+    <Image
+      src="https://res.cloudinary.com/ddvlexmvj/image/upload/v1770223244/boku_horizontal_matched_font_eqvy17.png"
+      alt="Boku Partners Logo"
+      width={150}
+      height={40}
+      priority
+    />
   );
 }

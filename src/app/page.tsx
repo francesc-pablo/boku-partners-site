@@ -24,7 +24,7 @@ export default function Home() {
 
   return (
     <div>
-      <section className="container mx-auto px-4 pt-8">
+      <section className="container mx-auto px-4 pt-2">
         <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
             {heroImage && (
               <Image

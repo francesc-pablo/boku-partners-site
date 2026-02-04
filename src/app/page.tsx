@@ -24,9 +24,8 @@ export default function Home() {
 
   return (
     <div>
-      <section className="pt-8">
-        <div className="container mx-auto px-4">
-          <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
+      <section className="container mx-auto px-4">
+        <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
             {heroImage && (
               <Image
                 src={heroImage.imageUrl}
@@ -50,7 +49,6 @@ export default function Home() {
               </Button>
             </div>
           </div>
-        </div>
       </section>
 
       <section className="container mx-auto px-4">
@@ -93,9 +91,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section>
-        <div className="container mx-auto px-4">
-          <div className="bg-primary text-primary-foreground rounded-lg text-center py-12 md:py-20 px-4">
+      <section className="container mx-auto px-4">
+        <div className="bg-primary text-primary-foreground rounded-lg text-center py-12 md:py-20 px-4">
             <h2 className="text-3xl font-headline font-semibold mb-4">
               Ready to Elevate Your Business?
             </h2>
@@ -106,7 +103,6 @@ export default function Home() {
               <Link href="/contact">Get In Touch</Link>
             </Button>
           </div>
-        </div>
       </section>
     </div>
   );

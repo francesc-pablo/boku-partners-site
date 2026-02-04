@@ -3,7 +3,7 @@ import Image from 'next/image';
 export function Logo() {
   return (
     <Image
-      src="https://res.cloudinary.com/ddvlexmvj/image/upload/v1770224522/boku_horizontal_matched_font_c5kydw.png"
+      src="https://res.cloudinary.com/ddvlexmvj/image/upload/v1770224711/boku_horizontal_matched_font_bqbvfy.png"
       alt="Boku Partners Logo"
       width={150}
       height={40}

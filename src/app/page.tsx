@@ -93,17 +93,19 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-headline font-semibold mb-4">
-            Ready to Elevate Your Business?
-          </h2>
-          <p className="text-lg max-w-2xl mx-auto mb-8">
-            Let's discuss how Boku Partners can help you achieve your strategic objectives.
-          </p>
-          <Button asChild size="lg" variant="secondary" className="font-bold text-lg">
-            <Link href="/contact">Get In Touch</Link>
-          </Button>
+      <section>
+        <div className="container mx-auto px-4">
+          <div className="bg-primary text-primary-foreground rounded-lg text-center py-12 md:py-20 px-4">
+            <h2 className="text-3xl font-headline font-semibold mb-4">
+              Ready to Elevate Your Business?
+            </h2>
+            <p className="text-lg max-w-2xl mx-auto mb-8">
+              Let's discuss how Boku Partners can help you achieve your strategic objectives.
+            </p>
+            <Button asChild size="lg" variant="secondary" className="font-bold text-lg">
+              <Link href="/contact">Get In Touch</Link>
+            </Button>
+          </div>
         </div>
       </section>
     </div>

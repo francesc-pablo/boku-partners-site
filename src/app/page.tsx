@@ -24,28 +24,32 @@ export default function Home() {
 
   return (
     <div>
-      <section className="relative w-full h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white py-0">
-        {heroImage && (
-          <Image
-            src={heroImage.imageUrl}
-            alt={heroImage.description}
-            fill
-            className="object-cover"
-            priority
-            data-ai-hint={heroImage.imageHint}
-          />
-        )}
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="relative z-10 container mx-auto px-4">
-          <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 tracking-tight">
-            Strategic Partnership for Sustainable Growth
-          </h1>
-          <p className="text-lg md:text-xl max-w-3xl mx-auto mb-8">
-            Boku Partners delivers expert advisory and operational support across finance, HR, and marketing to scale your business.
-          </p>
-          <Button asChild size="lg" className="font-bold text-lg">
-            <Link href="/services">Our Services</Link>
-          </Button>
+      <section>
+        <div className="container mx-auto px-4">
+          <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
+            {heroImage && (
+              <Image
+                src={heroImage.imageUrl}
+                alt={heroImage.description}
+                fill
+                className="object-cover"
+                priority
+                data-ai-hint={heroImage.imageHint}
+              />
+            )}
+            <div className="absolute inset-0 bg-black/50" />
+            <div className="relative z-10 container mx-auto px-4">
+              <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 tracking-tight">
+                Strategic Partnership for Sustainable Growth
+              </h1>
+              <p className="text-lg md:text-xl max-w-3xl mx-auto mb-8">
+                Boku Partners delivers expert advisory and operational support across finance, HR, and marketing to scale your business.
+              </p>
+              <Button asChild size="lg" className="font-bold text-lg">
+                <Link href="/services">Our Services</Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
 

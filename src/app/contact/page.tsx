@@ -4,8 +4,8 @@ import { ContactForm } from './_components/contact-form';
 const contactDetails = [
   {
     icon: <Phone className="h-6 w-6 text-primary" />,
-    text: '+1 (347) 587-9045',
-    href: 'tel:+13475879045',
+    text: '+1 (000) 000-0000',
+    href: 'tel:+1000000000',
   },
   {
     icon: <Mail className="h-6 w-6 text-primary" />,

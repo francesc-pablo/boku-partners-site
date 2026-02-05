@@ -37,7 +37,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
               <Logo />
             </Link>
         </div>
-        <nav className="flex flex-col space-y-4 pl-8">
+        <nav className="flex flex-col space-y-4 pl-7">
           {navLinks.map((link) => (
             <Link
               key={link.href}

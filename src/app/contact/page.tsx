@@ -23,7 +23,7 @@ export default function ContactPage() {
   return (
     <>
       <section className="bg-secondary">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-headline font-bold">Contact Us</h1>
           <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             We're here to help. Reach out to us with any questions or to start a conversation about your business needs.
@@ -31,7 +31,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4">
+      <section className="container mx-auto">
         <div className="grid md:grid-cols-2 gap-16 max-w-6xl mx-auto">
           <div>
             <h2 className="text-3xl font-headline font-semibold mb-6">Get in Touch</h2>

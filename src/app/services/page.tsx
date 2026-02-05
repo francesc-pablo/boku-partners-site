@@ -42,7 +42,7 @@ export default function ServicesPage() {
   return (
     <>
       <section className="bg-secondary">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-headline font-bold">Our Services</h1>
           <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Tailored solutions to drive growth, efficiency, and innovation across your organization.
@@ -50,7 +50,7 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4">
+      <section className="container mx-auto">
         <div className="max-w-4xl mx-auto">
           <Accordion type="single" collapsible className="w-full" defaultValue="advise-design">
             {services.map((service) => (

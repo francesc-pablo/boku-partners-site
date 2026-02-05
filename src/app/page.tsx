@@ -24,8 +24,8 @@ export default function Home() {
 
   return (
     <div>
-      <section className="container mx-auto px-4 pt-2">
-        <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
+      <section className="container mx-auto pt-2">
+        <div className="relative h-[50vh] md:h-[70vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
             {heroImage && (
               <Image
                 src={heroImage.imageUrl}
@@ -37,7 +37,7 @@ export default function Home() {
               />
             )}
             <div className="absolute inset-0 bg-black/50" />
-            <div className="relative z-10 container mx-auto px-4">
+            <div className="relative z-10">
               <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 tracking-tight">
                 Strategic Partnership for Sustainable Growth
               </h1>
@@ -51,7 +51,7 @@ export default function Home() {
           </div>
       </section>
 
-      <section className="container mx-auto px-4">
+      <section className="container mx-auto">
         <div className="text-center max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-headline font-semibold mb-4">
             Your Trusted Partner in Business Excellence
@@ -63,7 +63,7 @@ export default function Home() {
       </section>
 
       <section className="bg-secondary">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-headline font-semibold">
               Comprehensive Service Offerings
@@ -76,7 +76,7 @@ export default function Home() {
         </div>
       </section>
 
-       <section className="container mx-auto px-4">
+       <section className="container mx-auto">
         <div className="text-center mb-12">
             <h2 className="text-3xl font-headline font-semibold">Why Boku Partners?</h2>
             <p className="text-muted-foreground text-lg mt-2">Achieve more with a partner that understands your vision.</p>
@@ -91,8 +91,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4">
-        <div className="bg-primary text-primary-foreground rounded-lg text-center py-12 md:py-20 px-4">
+      <section className="container mx-auto">
+        <div className="bg-primary text-primary-foreground rounded-lg text-center py-12 md:py-20">
             <h2 className="text-3xl font-headline font-semibold mb-4">
               Ready to Elevate Your Business?
             </h2>

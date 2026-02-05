@@ -28,7 +28,7 @@ export default function IndustryFocusPage() {
   return (
     <>
       <section className="bg-secondary">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-headline font-bold">Industry Focus</h1>
           <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             We apply deep industry expertise to deliver solutions that meet the unique challenges of your sector.
@@ -36,7 +36,7 @@ export default function IndustryFocusPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4">
+      <section className="container mx-auto">
         <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {industries.map((industry) => (
             <Card key={industry.name} className="flex flex-col md:flex-row items-center p-6 hover:border-primary transition-colors">

@@ -21,7 +21,7 @@ export function Footer() {
 
   return (
     <footer className="bg-secondary">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto py-12">
         <div className="grid md:grid-cols-3 gap-8">
           <div className="space-y-4">
             <Logo />

@@ -22,7 +22,7 @@ export default function AboutPage() {
   return (
     <>
       <section className="bg-secondary">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-headline font-bold">About Boku Partners</h1>
           <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             We are a dedicated team of experts committed to empowering businesses through strategic advisory and operational excellence.
@@ -30,7 +30,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4">
+      <section className="container mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="prose prose-lg max-w-none text-muted-foreground">
             <h2 className="text-3xl font-headline font-semibold text-foreground">Our Mission</h2>
@@ -54,7 +54,7 @@ export default function AboutPage() {
       </section>
 
       <section className="bg-secondary">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-headline font-semibold">Our Core Values</h2>
             <p className="text-muted-foreground text-lg mt-2">The principles that guide our work and our partnerships.</p>
@@ -72,7 +72,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4">
+      <section className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-headline font-semibold">Meet Our Leadership</h2>
           <p className="text-muted-foreground text-lg mt-2">The experienced professionals driving our success.</p>

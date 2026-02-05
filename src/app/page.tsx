@@ -25,7 +25,7 @@ export default function Home() {
   return (
     <div>
       <section className="container mx-auto pt-2">
-        <div className="relative h-[50vh] md:h-[70vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
+        <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
             {heroImage && (
               <Image
                 src={heroImage.imageUrl}

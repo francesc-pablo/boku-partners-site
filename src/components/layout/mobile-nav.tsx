@@ -30,9 +30,9 @@ export function MobileNav({ navLinks }: MobileNavProps) {
           <span className="sr-only">Toggle Menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="pr-0">
+      <SheetContent side="left">
         <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-        <Link href="/" className="mr-6 flex items-center" onClick={() => setOpen(false)}>
+        <Link href="/" className="flex items-center" onClick={() => setOpen(false)}>
           <Logo />
         </Link>
         <div className="flex flex-col space-y-4 mt-8">

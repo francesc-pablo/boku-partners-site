@@ -29,7 +29,7 @@ export function Header() {
         <div className="flex-grow" />
 
         <div className="flex items-center">
-            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium pr-8">
+            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium pr-12">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -43,7 +43,7 @@ export function Header() {
                 </Link>
               ))}
             </nav>
-            <div className="md:hidden">
+            <div className="md:hidden pr-4">
               <MobileNav navLinks={navLinks} />
             </div>
         </div>

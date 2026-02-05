@@ -5,8 +5,8 @@ export function Logo() {
     <Image
       src="https://res.cloudinary.com/ddvlexmvj/image/upload/v1770333485/image0-Photoroom_rx2nb8.png"
       alt="Boku Partners Logo"
-      width={50}
-      height={50}
+      width={60}
+      height={60}
       priority
     />
   );

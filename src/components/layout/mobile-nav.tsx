@@ -35,7 +35,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
         <Link href="/" className="flex items-center" onClick={() => setOpen(false)}>
           <Logo />
         </Link>
-        <div className="flex flex-col space-y-4 mt-8">
+        <div className="flex flex-col space-y-4 mt-8 pl-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}

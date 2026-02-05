@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Logo } from '../logo';
@@ -32,10 +32,12 @@ export function MobileNav({ navLinks }: MobileNavProps) {
       </SheetTrigger>
       <SheetContent side="left">
         <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-        <Link href="/" className="flex items-center" onClick={() => setOpen(false)}>
-          <Logo />
-        </Link>
-        <div className="flex flex-col space-y-4 mt-8 pl-5">
+        <div className="mb-8">
+            <Link href="/" className="flex items-center" onClick={() => setOpen(false)}>
+              <Logo />
+            </Link>
+        </div>
+        <nav className="flex flex-col space-y-4">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -49,7 +51,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
               {link.label}
             </Link>
           ))}
-        </div>
+        </nav>
       </SheetContent>
     </Sheet>
   );

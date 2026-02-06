@@ -9,6 +9,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { slugify } from '@/lib/utils';
+import { ServicesTabs } from '@/app/_components/services-tabs';
 
 const features = [
     {
@@ -102,7 +103,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-secondary">
+      <section>
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-headline font-semibold">
@@ -112,28 +113,30 @@ export default function Home() {
               Solutions designed to meet the evolving needs of your business.
             </p>
           </div>
-          <div className="max-w-4xl mx-auto">
-            <Accordion type="single" collapsible className="w-full" defaultValue="consulting-transformation">
-              {services.map((service) => (
-                <AccordionItem key={service.id} value={service.id} id={service.id}>
-                  <AccordionTrigger className="text-2xl font-headline hover:no-underline">
-                    {service.title}
-                  </AccordionTrigger>
-                  <AccordionContent className="prose prose-lg max-w-none text-muted-foreground pt-2">
-                    <p className="lead">{service.description}</p>
-                    <ul className="list-disc pl-5 mt-4 space-y-2">
-                      {service.subServices.map((sub) => (
-                        <li key={sub}>
-                          <Link href={`/services?tab=${service.id}#${slugify(sub)}`} className="hover:underline hover:text-primary transition-colors">
-                            {sub}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+          <div className="max-w-5xl mx-auto bg-secondary rounded-lg p-8 md:p-12">
+            <div className="max-w-4xl mx-auto">
+                <Accordion type="single" collapsible className="w-full" defaultValue="consulting-transformation">
+                {services.map((service) => (
+                    <AccordionItem key={service.id} value={service.id} id={service.id}>
+                    <AccordionTrigger className="text-2xl font-headline hover:no-underline">
+                        {service.title}
+                    </AccordionTrigger>
+                    <AccordionContent className="prose prose-lg max-w-none text-muted-foreground pt-2">
+                        <p className="lead">{service.description}</p>
+                        <ul className="list-disc pl-5 mt-4 space-y-2">
+                        {service.subServices.map((sub) => (
+                            <li key={sub}>
+                            <Link href={`/services?tab=${service.id}#${slugify(sub)}`} className="hover:underline hover:text-primary transition-colors">
+                                {sub}
+                            </Link>
+                            </li>
+                        ))}
+                        </ul>
+                    </AccordionContent>
+                    </AccordionItem>
+                ))}
+                </Accordion>
+            </div>
           </div>
         </div>
       </section>

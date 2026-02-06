@@ -1,3 +1,5 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -105,15 +107,15 @@ export default function Home() {
 
       <section>
         <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-headline font-semibold">
-              Comprehensive Service Offerings
-            </h2>
-            <p className="text-muted-foreground text-lg mt-2">
-              Solutions designed to meet the evolving needs of your business.
-            </p>
-          </div>
           <div className="max-w-5xl mx-auto bg-secondary rounded-lg p-8 md:p-12">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-headline font-semibold">
+                Comprehensive Service Offerings
+              </h2>
+              <p className="text-muted-foreground text-lg mt-2">
+                Solutions designed to meet the evolving needs of your business.
+              </p>
+            </div>
             <div className="max-w-4xl mx-auto">
                 <Accordion type="single" collapsible className="w-full" defaultValue="consulting-transformation">
                 {services.map((service) => (

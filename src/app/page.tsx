@@ -8,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { slugify } from '@/lib/utils';
 
 const features = [
     {
@@ -26,8 +27,8 @@ const features = [
 
 const services = [
   {
-    id: 'advise-design',
-    title: 'Advise & Design',
+    id: 'consulting-transformation',
+    title: 'Consulting and Transformation',
     description: 'We help you assess, strategize, and transform your core functions for optimal performance and growth.',
     subServices: ['Function Assessments', 'M&A/Carveout', 'Strategy & Transformation'],
   },
@@ -63,7 +64,7 @@ export default function Home() {
 
   return (
     <div>
-      <section className="container mx-auto pt-2 pb-8">
+      <section className="container mx-auto pt-2 pb-2">
         <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
             {heroImage && (
               <Image
@@ -112,7 +113,7 @@ export default function Home() {
             </p>
           </div>
           <div className="max-w-4xl mx-auto">
-            <Accordion type="single" collapsible className="w-full" defaultValue="advise-design">
+            <Accordion type="single" collapsible className="w-full" defaultValue="consulting-transformation">
               {services.map((service) => (
                 <AccordionItem key={service.id} value={service.id} id={service.id}>
                   <AccordionTrigger className="text-2xl font-headline hover:no-underline">
@@ -123,7 +124,7 @@ export default function Home() {
                     <ul className="list-disc pl-5 mt-4 space-y-2">
                       {service.subServices.map((sub) => (
                         <li key={sub}>
-                          <Link href={`/services?tab=${service.id}`} className="hover:underline hover:text-primary transition-colors">
+                          <Link href={`/services?tab=${service.id}#${slugify(sub)}`} className="hover:underline hover:text-primary transition-colors">
                             {sub}
                           </Link>
                         </li>

@@ -3,11 +3,12 @@
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { slugify } from '@/lib/utils';
 
 const services = [
   {
-    id: 'advise-design',
-    title: 'Advise & Design',
+    id: 'consulting-transformation',
+    title: 'Consulting and Transformation',
     subServices: [
         { title: 'Function Assessments', description: 'In-depth analysis of your business functions to identify opportunities for improvement and strategic alignment.' },
         { title: 'M&A/Carveout', description: 'Expert guidance through mergers, acquisitions, and carve-out scenarios to ensure smooth transitions and value creation.' },
@@ -47,7 +48,7 @@ const services = [
 
 export function ServicesTabs({ activeTab }: { activeTab?: string }) {
   return (
-    <Tabs defaultValue={activeTab || "advise-design"} className="w-full">
+    <Tabs defaultValue={activeTab || "consulting-transformation"} className="w-full">
       <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-4 h-auto">
         {services.map((service) => (
           <TabsTrigger key={service.id} value={service.id} className="font-headline py-2 data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -59,7 +60,7 @@ export function ServicesTabs({ activeTab }: { activeTab?: string }) {
         <TabsContent key={service.id} value={service.id} className="pt-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {service.subServices.map((subService) => (
-              <Card key={subService.title} className="group h-full flex flex-col cursor-pointer transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-lg">
+              <Card key={subService.title} id={slugify(subService.title)} className="group h-full flex flex-col cursor-pointer transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-xl font-headline">{subService.title}</CardTitle>
                 </CardHeader>

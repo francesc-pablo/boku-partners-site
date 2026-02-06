@@ -11,8 +11,8 @@ const navLinks = [
 
 const services = [
     {
-        id: 'advise-design',
-        title: 'Advise & Design',
+        id: 'consulting-transformation',
+        title: 'Consulting and Transformation',
     },
     {
         id: 'finance-accounting',

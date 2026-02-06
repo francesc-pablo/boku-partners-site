@@ -1,6 +1,5 @@
 'use client';
 
-import { Logo } from '@/components/logo';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -24,7 +23,6 @@ export function Footer() {
       <div className="container mx-auto py-12">
         <div className="grid md:grid-cols-3 gap-8">
           <div className="space-y-4">
-            <Logo />
             <p className="text-muted-foreground text-sm max-w-xs">
               Strategic partnership for sustainable business growth.
             </p>

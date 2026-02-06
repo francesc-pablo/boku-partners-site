@@ -1,6 +1,6 @@
 import { ServicesTabs } from '@/app/_components/services-tabs';
 
-export default function ServicesPage() {
+export default function ServicesPage({ searchParams }: { searchParams?: { tab?: string } }) {
   return (
     <>
       <section className="bg-secondary">
@@ -13,7 +13,7 @@ export default function ServicesPage() {
       </section>
 
       <section className="container mx-auto">
-        <ServicesTabs />
+        <ServicesTabs activeTab={searchParams?.tab} />
       </section>
     </>
   );

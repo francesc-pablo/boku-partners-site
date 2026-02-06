@@ -122,7 +122,11 @@ export default function Home() {
                     <p className="lead">{service.description}</p>
                     <ul className="list-disc pl-5 mt-4 space-y-2">
                       {service.subServices.map((sub) => (
-                        <li key={sub}>{sub}</li>
+                        <li key={sub}>
+                          <Link href={`/services?tab=${service.id}`} className="hover:underline hover:text-primary transition-colors">
+                            {sub}
+                          </Link>
+                        </li>
                       ))}
                     </ul>
                   </AccordionContent>

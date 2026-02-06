@@ -45,9 +45,9 @@ const services = [
   },
 ];
 
-export function ServicesTabs() {
+export function ServicesTabs({ activeTab }: { activeTab?: string }) {
   return (
-    <Tabs defaultValue="advise-design" className="w-full">
+    <Tabs defaultValue={activeTab || "advise-design"} className="w-full">
       <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-4 h-auto">
         {services.map((service) => (
           <TabsTrigger key={service.id} value={service.id} className="font-headline py-2 data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">

@@ -95,7 +95,7 @@ export default function Home() {
 
       <section className="container mx-auto py-0">
         <div className="bg-secondary rounded-b-lg p-8 md:p-12">
-            <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="text-center max-w-3xl mx-auto mt-12 mb-12">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold mb-4">
                 Your Trusted Partner in Business Excellence
               </h2>

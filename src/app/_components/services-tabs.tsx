@@ -1,9 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { slugify } from '@/lib/utils';
+import { cn, slugify } from '@/lib/utils';
 
 const services = [
   {
@@ -47,6 +48,24 @@ const services = [
 ];
 
 export function ServicesTabs({ activeTab }: { activeTab?: string }) {
+  const [highlightedId, setHighlightedId] = useState('');
+
+  useEffect(() => {
+    // This effect runs only once on the client after the component mounts.
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+      setHighlightedId(hash);
+      // The browser will scroll to the element with the ID in the hash.
+      // For a smoother scroll, we can do it programmatically.
+      setTimeout(() => {
+        const element = document.getElementById(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100); // A small delay can help ensure the element is rendered.
+    }
+  }, []);
+
   return (
     <Tabs defaultValue={activeTab || "consulting-transformation"} className="w-full">
       <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-4 h-auto">
@@ -59,19 +78,33 @@ export function ServicesTabs({ activeTab }: { activeTab?: string }) {
       {services.map((service) => (
         <TabsContent key={service.id} value={service.id} className="pt-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {service.subServices.map((subService) => (
-              <Card key={subService.title} id={slugify(subService.title)} className="group h-full flex flex-col cursor-pointer transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-xl font-headline">{subService.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-muted-foreground group-hover:text-primary-foreground/90 transition-colors">{subService.description}</p>
-                </CardContent>
-                <CardFooter className="pt-4 justify-end">
-                    <ArrowRight className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </CardFooter>
-              </Card>
-            ))}
+            {service.subServices.map((subService) => {
+              const subServiceId = slugify(subService.title);
+              const isHighlighted = subServiceId === highlightedId;
+
+              return (
+                <Card
+                  key={subService.title}
+                  id={subServiceId}
+                  className={cn(
+                    'group h-full flex flex-col cursor-pointer transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-lg',
+                    isHighlighted && 'bg-primary text-primary-foreground shadow-lg'
+                  )}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-xl font-headline">{subService.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className={cn('text-muted-foreground group-hover:text-primary-foreground/90 transition-colors', isHighlighted && 'text-primary-foreground/90')}>
+                      {subService.description}
+                    </p>
+                  </CardContent>
+                  <CardFooter className="pt-4 justify-end">
+                    <ArrowRight className={cn('w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300', isHighlighted && 'opacity-100')} />
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
       ))}

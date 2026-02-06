@@ -32,12 +32,12 @@ export function MobileNav({ navLinks }: MobileNavProps) {
       </SheetTrigger>
       <SheetContent side="left">
         <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-        <div className="mb-8 pl-8">
+        <div className="mb-8 pl-7">
             <Link href="/" className="flex items-center" onClick={() => setOpen(false)}>
               <Logo />
             </Link>
         </div>
-        <nav className="flex flex-col space-y-4 pl-8">
+        <nav className="flex flex-col space-y-4 pl-14">
           {navLinks.map((link) => (
             <Link
               key={link.href}

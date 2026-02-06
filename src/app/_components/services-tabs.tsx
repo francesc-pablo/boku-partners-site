@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn, slugify } from '@/lib/utils';
 
@@ -99,9 +98,6 @@ export function ServicesTabs({ activeTab }: { activeTab?: string }) {
                       {subService.description}
                     </p>
                   </CardContent>
-                  <CardFooter className="pt-4 justify-end">
-                    <ArrowRight className={cn('w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300', isHighlighted && 'opacity-100')} />
-                  </CardFooter>
                 </Card>
               );
             })}

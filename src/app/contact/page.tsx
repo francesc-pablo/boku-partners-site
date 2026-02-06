@@ -1,21 +1,11 @@
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { ContactForm } from './_components/contact-form';
 
 const contactDetails = [
   {
-    icon: <Phone className="h-6 w-6 text-primary" />,
-    text: '+1 (000) 000-0000',
-    href: 'tel:+1000000000',
-  },
-  {
     icon: <Mail className="h-6 w-6 text-primary" />,
     text: 'info@bokupartners.com',
     href: 'mailto:info@bokupartners.com',
-  },
-  {
-    icon: <MapPin className="h-6 w-6 text-primary" />,
-    text: 'Corporate headquarters address placeholder',
-    href: '#',
   },
 ];
 

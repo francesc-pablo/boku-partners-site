@@ -66,8 +66,8 @@ export default function Home() {
 
   return (
     <div>
-      <section className="container mx-auto pt-2 pb-2">
-        <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-lg overflow-hidden">
+      <section className="container mx-auto pt-2 pb-0">
+        <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white rounded-t-lg overflow-hidden">
             {heroImage && (
               <Image
                 src={heroImage.imageUrl}
@@ -79,7 +79,7 @@ export default function Home() {
               />
             )}
             <div className="absolute inset-0 bg-black/50" />
-            <div className="relative z-10">
+            <div className="relative z-10 p-4 md:p-8">
               <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 tracking-tight">
                 Strategic Partnership for Sustainable Growth
               </h1>
@@ -94,7 +94,7 @@ export default function Home() {
       </section>
 
       <section className="container mx-auto py-0">
-        <div className="bg-secondary rounded-lg p-8 md:p-12">
+        <div className="bg-secondary rounded-b-lg p-8 md:p-12">
             <div className="text-center max-w-3xl mx-auto mb-12">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold mb-4">
                 Your Trusted Partner in Business Excellence

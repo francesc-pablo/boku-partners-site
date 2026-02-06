@@ -103,7 +103,7 @@ export default function Home() {
                 At Boku Partners, we integrate seamlessly with your team to provide comprehensive solutions that drive efficiency and innovation. From strategic design to operational execution, we are committed to your success.
               </p>
             </div>
-            <div className="text-center mt-12 mb-12">
+            <div className="text-center mt-24 mb-12">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold">
                 Comprehensive Service Offerings
               </h2>

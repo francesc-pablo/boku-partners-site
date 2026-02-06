@@ -18,7 +18,7 @@ export function Header() {
   const pathname = usePathname();
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
-  const headerHeight = 112; // h-28 is 7rem which is 112px
+  const headerHeight = 80; // h-20 is 5rem which is 80px
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,8 +42,8 @@ export function Header() {
   return (
     <header
       className={cn(
-        'sticky z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-28 transition-all duration-300',
-        hidden ? '-top-28' : 'top-0'
+        'sticky z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-20 transition-all duration-300',
+        hidden ? '-top-20' : 'top-0'
       )}
     >
       <div className="container flex h-full items-center">

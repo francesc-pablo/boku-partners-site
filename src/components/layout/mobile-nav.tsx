@@ -25,7 +25,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden text-border [&_svg]:h-10 [&_svg]:w-10">
+        <Button variant="ghost" size="icon" className="md:hidden text-[#B2BEB5] [&_svg]:h-10 [&_svg]:w-10">
           <Menu />
           <span className="sr-only">Toggle Menu</span>
         </Button>
@@ -37,7 +37,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
               <Logo />
             </Link>
         </div>
-        <nav className="flex flex-col space-y-4 pl-7">
+        <nav className="flex flex-col space-y-4 pl-12">
           {navLinks.map((link) => (
             <Link
               key={link.href}

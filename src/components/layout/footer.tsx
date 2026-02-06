@@ -1,12 +1,31 @@
 'use client';
 
 import Link from 'next/link';
+import { Logo } from '../logo';
 
 const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/services', label: 'Services' },
   { href: '/industry-focus', label: 'Industry Focus' },
   { href: '/contact', label: 'Contact' },
+];
+
+const services = [
+    {
+        id: 'advise-design',
+        title: 'Advise & Design',
+    },
+    {
+        id: 'finance-accounting',
+        title: 'Finance & Accounting',
+    },
+    {
+        id: 'human-resources',
+        title: 'Human Resources',
+    },
+    {
+        id: 'marketing-ai',
+        title: 'Marketing & AI',
+    },
 ];
 
 export function Footer() {
@@ -14,8 +33,9 @@ export function Footer() {
   return (
     <footer className="bg-secondary">
       <div className="container mx-auto py-12">
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
+            <Logo />
           </div>
           <div>
             <h3 className="font-headline font-semibold mb-4">Quick Links</h3>
@@ -27,6 +47,18 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-headline font-semibold mb-4">Services</h3>
+            <ul className="space-y-2">
+                {services.map((service) => (
+                    <li key={service.id}>
+                        <Link href={`/services?tab=${service.id}`} className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                            {service.title}
+                        </Link>
+                    </li>
+                ))}
             </ul>
           </div>
           <div>

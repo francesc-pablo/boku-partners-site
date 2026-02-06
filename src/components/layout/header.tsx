@@ -8,7 +8,6 @@ import { MobileNav } from './mobile-nav';
 
 const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
   { href: '/services', label: 'Services' },
   { href: '/industry-focus', label: 'Industry Focus' },
   { href: '/contact', label: 'Contact' },
@@ -18,7 +17,7 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-24">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-28">
       <div className="container flex h-full items-center">
         <div className="flex items-center">
           <Link href="/" className="flex items-center">

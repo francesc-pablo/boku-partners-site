@@ -94,20 +94,17 @@ export default function Home() {
           </div>
       </section>
 
-      <section className="container mx-auto">
-        <div className="text-center max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-headline font-semibold mb-4">
-            Your Trusted Partner in Business Excellence
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            At Boku Partners, we integrate seamlessly with your team to provide comprehensive solutions that drive efficiency and innovation. From strategic design to operational execution, we are committed to your success.
-          </p>
-        </div>
-      </section>
-
-      <section>
+      <section className="bg-white">
         <div className="container mx-auto">
           <div className="max-w-5xl mx-auto bg-secondary rounded-lg p-8 md:p-12">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl md:text-4xl font-headline font-semibold mb-4">
+                Your Trusted Partner in Business Excellence
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                At Boku Partners, we integrate seamlessly with your team to provide comprehensive solutions that drive efficiency and innovation. From strategic design to operational execution, we are committed to your success.
+              </p>
+            </div>
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold">
                 Comprehensive Service Offerings

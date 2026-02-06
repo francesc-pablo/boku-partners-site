@@ -2,7 +2,12 @@ import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ServicesTabs } from './_components/services-tabs';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 const features = [
     {
@@ -18,6 +23,40 @@ const features = [
       description: 'Our services are geared towards driving sustainable growth, from financial stability to market expansion.'
     }
 ]
+
+const services = [
+  {
+    id: 'advise-design',
+    title: 'Advise & Design',
+    description: 'We help you assess, strategize, and transform your core functions for optimal performance and growth.',
+    subServices: ['Function Assessments', 'M&A/Carveout', 'Strategy & Transformation'],
+  },
+  {
+    id: 'finance-accounting',
+    title: 'Finance & Accounting',
+    description: 'Our comprehensive financial services ensure your fiscal health and operational efficiency.',
+    subServices: [
+      'CFO Advisory',
+      'Accounts Receivable',
+      'Accounts Payable',
+      'Bookkeeping & Reporting',
+      'Cash Flow Management',
+    ],
+  },
+  {
+    id: 'human-resources',
+    title: 'Human Resources',
+    description: 'From advisory to operations, we manage your HR needs to build a thriving and compliant workforce.',
+    subServices: ['HR Advisory', 'HR Operations', 'Talent Acquisition & Development', 'Payroll'],
+  },
+  {
+    id: 'marketing-ai',
+    title: 'Marketing & AI',
+    description: 'Leverage the power of digital marketing and artificial intelligence to accelerate your market presence.',
+    subServices: ['Digital Marketing', 'AI Advisory'],
+  },
+];
+
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find((img) => img.id === 'hero');
@@ -72,7 +111,25 @@ export default function Home() {
               Solutions designed to meet the evolving needs of your business.
             </p>
           </div>
-          <ServicesTabs />
+          <div className="max-w-4xl mx-auto">
+            <Accordion type="single" collapsible className="w-full" defaultValue="advise-design">
+              {services.map((service) => (
+                <AccordionItem key={service.id} value={service.id} id={service.id}>
+                  <AccordionTrigger className="text-2xl font-headline hover:no-underline">
+                    {service.title}
+                  </AccordionTrigger>
+                  <AccordionContent className="prose prose-lg max-w-none text-muted-foreground pt-2">
+                    <p className="lead">{service.description}</p>
+                    <ul className="list-disc pl-5 mt-4 space-y-2">
+                      {service.subServices.map((sub) => (
+                        <li key={sub}>{sub}</li>
+                      ))}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
         </div>
       </section>
 

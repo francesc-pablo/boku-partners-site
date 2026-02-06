@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Logo } from '../logo';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -35,7 +34,6 @@ export function Footer() {
       <div className="container mx-auto py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <Logo />
           </div>
           <div>
             <h3 className="font-headline font-semibold mb-4">Quick Links</h3>

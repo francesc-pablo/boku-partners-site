@@ -11,22 +11,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { slugify } from '@/lib/utils';
-import { ServicesTabs } from '@/app/_components/services-tabs';
-
-const features = [
-    {
-      title: 'Expert Guidance',
-      description: 'Leverage our deep industry knowledge to navigate complex business challenges and unlock strategic opportunities.'
-    },
-    {
-      title: 'Tailored Solutions',
-      description: 'We design and implement solutions specifically for your business needs, ensuring functional alignment and operational excellence.'
-    },
-    {
-      title: 'Growth Focused',
-      description: 'Our services are geared towards driving sustainable growth, from financial stability to market expansion.'
-    }
-]
 
 const services = [
   {
@@ -61,6 +45,21 @@ const services = [
   },
 ];
 
+const features = [
+    {
+      title: 'Expert Guidance',
+      description: 'Leverage our deep industry knowledge to navigate complex business challenges and unlock strategic opportunities.'
+    },
+    {
+      title: 'Tailored Solutions',
+      description: 'We design and implement solutions specifically for your business needs, ensuring functional alignment and operational excellence.'
+    },
+    {
+      title: 'Growth Focused',
+      description: 'Our services are geared towards driving sustainable growth, from financial stability to market expansion.'
+    }
+]
+
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find((img) => img.id === 'hero');
@@ -94,9 +93,8 @@ export default function Home() {
           </div>
       </section>
 
-      <section className="bg-white">
-        <div className="container mx-auto">
-          <div className="max-w-5xl mx-auto bg-secondary rounded-lg p-8 md:p-12">
+      <section className="container mx-auto">
+        <div className="bg-secondary rounded-lg p-8 md:p-12">
             <div className="text-center max-w-3xl mx-auto mb-12">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold mb-4">
                 Your Trusted Partner in Business Excellence
@@ -137,7 +135,6 @@ export default function Home() {
                 </Accordion>
             </div>
           </div>
-        </div>
       </section>
 
        <section className="container mx-auto">

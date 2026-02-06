@@ -25,7 +25,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground [&_svg]:h-10 [&_svg]:w-10">
+        <Button variant="ghost" size="icon" className="md:hidden text-border [&_svg]:h-10 [&_svg]:w-10">
           <Menu />
           <span className="sr-only">Toggle Menu</span>
         </Button>

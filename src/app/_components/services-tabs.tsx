@@ -8,7 +8,7 @@ import { cn, slugify } from '@/lib/utils';
 const services = [
   {
     id: 'consulting-transformation',
-    title: 'Consulting and Transformation',
+    title: 'Consulting & Transformation',
     subServices: [
         { title: 'Function Assessments', description: 'In-depth analysis of your business functions to identify opportunities for improvement and strategic alignment.' },
         { title: 'M&A/Carveout', description: 'Expert guidance through mergers, acquisitions, and carve-out scenarios to ensure smooth transitions and value creation.' },

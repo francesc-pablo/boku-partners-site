@@ -15,7 +15,7 @@ import { slugify } from '@/lib/utils';
 const services = [
   {
     id: 'consulting-transformation',
-    title: 'Consulting and Transformation',
+    title: 'Consulting & Transformation',
     description: 'We help you assess, strategize, and transform your core functions for optimal performance and growth.',
     subServices: ['Function Assessments', 'M&A/Carveout', 'Strategy & Transformation'],
   },
@@ -95,7 +95,7 @@ export default function Home() {
 
       <section className="container mx-auto py-0">
         <div className="bg-secondary rounded-b-lg p-8 md:p-12">
-            <div className="text-center max-w-3xl mx-auto mt-12 mb-12">
+            <div className="text-center max-w-3xl mx-auto mt-12 mb-24">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold mb-4">
                 Your Trusted Partner in Business Excellence
               </h2>

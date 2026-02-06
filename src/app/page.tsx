@@ -93,7 +93,7 @@ export default function Home() {
           </div>
       </section>
 
-      <section className="container mx-auto">
+      <section className="container mx-auto py-0">
         <div className="bg-secondary rounded-lg p-8 md:p-12">
             <div className="text-center max-w-3xl mx-auto mb-12">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold mb-4">

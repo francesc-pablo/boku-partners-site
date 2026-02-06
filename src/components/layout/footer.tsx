@@ -42,7 +42,7 @@ export function Footer() {
           <div>
             <h3 className="font-headline font-semibold mb-4">Contact Info</h3>
             <ul className="space-y-2 text-sm">
-              <li className="text-muted-foreground">Phone: +1 (000) 000-000</li>
+              <li className="text-muted-foreground">+1 (000) 000-000</li>
               <li className="text-muted-foreground">Email: info@bokupartners.com</li>
             </ul>
           </div>

@@ -33,9 +33,9 @@ export function Footer() {
   return (
     <footer className="bg-secondary">
       <div className="container mx-auto py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left md:text-center">
-          <div>
-            <div className="inline-block text-left">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:text-center">
+          <div className="pl-4 md:pl-0">
+            <div className="md:inline-block text-left">
               <h3 className="font-headline font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
                 {navLinks.map((link) => (
@@ -48,8 +48,8 @@ export function Footer() {
               </ul>
             </div>
           </div>
-          <div>
-            <div className="inline-block text-left">
+          <div className="pl-4 md:pl-0">
+            <div className="md:inline-block text-left">
               <h3 className="font-headline font-semibold mb-4">Services</h3>
               <ul className="space-y-2">
                   {services.map((service) => (
@@ -62,8 +62,8 @@ export function Footer() {
               </ul>
             </div>
           </div>
-          <div>
-            <div className="inline-block text-left">
+          <div className="pl-4 md:pl-0">
+            <div className="md:inline-block text-left">
               <h3 className="font-headline font-semibold mb-4">Contact Info</h3>
               <ul className="space-y-2 text-sm">
                 <li className="text-muted-foreground">Email: info@bokupartners.com</li>

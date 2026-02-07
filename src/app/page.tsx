@@ -86,7 +86,7 @@ export default function Home() {
               <p className="text-lg md:text-xl max-w-3xl mx-auto mb-8">
                 Boku Partners delivers expert advisory and operational support across finance, HR, and marketing to scale your business.
               </p>
-              <Button asChild size="lg" className="font-bold text-lg">
+              <Button asChild size="lg" className="font-bold text-lg hover:bg-white hover:text-primary">
                 <Link href="/services">Our Services</Link>
               </Button>
             </div>

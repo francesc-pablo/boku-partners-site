@@ -33,9 +33,7 @@ export function Footer() {
   return (
     <footer className="bg-secondary">
       <div className="container mx-auto py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-4">
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           <div>
             <h3 className="font-headline font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">

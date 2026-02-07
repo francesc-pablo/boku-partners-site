@@ -115,7 +115,7 @@ export default function Home() {
                 <Accordion type="single" collapsible className="w-full" defaultValue="consulting-transformation">
                 {services.map((service) => (
                     <AccordionItem key={service.id} value={service.id} id={service.id}>
-                    <AccordionTrigger className="text-2xl font-headline hover:no-underline">
+                    <AccordionTrigger className="text-xl md:text-2xl text-left font-headline hover:no-underline">
                         {service.title}
                     </AccordionTrigger>
                     <AccordionContent className="prose prose-lg max-w-none text-muted-foreground pt-2">

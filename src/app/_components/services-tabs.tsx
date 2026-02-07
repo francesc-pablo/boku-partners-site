@@ -67,9 +67,9 @@ export function ServicesTabs({ activeTab }: { activeTab?: string }) {
 
   return (
     <Tabs defaultValue={activeTab || "consulting-transformation"} className="w-full">
-      <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-4 h-auto">
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
         {services.map((service) => (
-          <TabsTrigger key={service.id} value={service.id} className="font-headline py-2 data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger key={service.id} value={service.id} className="font-headline py-2 text-xs sm:text-sm data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             {service.title}
           </TabsTrigger>
         ))}

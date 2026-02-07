@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
-import { Plus, Minus } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -34,8 +34,10 @@ const AccordionTrigger = React.forwardRef<
       {...props}
     >
       {children}
-      <Plus className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={3} />
-      <Minus className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={3} />
+      <ChevronDown
+        className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-data-[state=open]:rotate-180"
+        strokeWidth={3}
+      />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ))

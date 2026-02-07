@@ -7,13 +7,14 @@ import { Menu, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Logo } from '../logo';
-import { cn } from '@/lib/utils';
+import { cn, slugify } from '@/lib/utils';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
 } from '@/components/ui/accordion';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
+import { services } from '@/lib/services';
 
 type NavLink = {
   href: string;
@@ -23,25 +24,6 @@ type NavLink = {
 interface MobileNavProps {
   navLinks: NavLink[];
 }
-
-const services = [
-    {
-        id: 'consulting-transformation',
-        title: 'Consulting & Transformation',
-    },
-    {
-        id: 'finance-accounting',
-        title: 'Finance & Accounting',
-    },
-    {
-        id: 'human-resources',
-        title: 'Human Resources',
-    },
-    {
-        id: 'marketing-ai',
-        title: 'Marketing & AI',
-    },
-];
 
 export function MobileNav({ navLinks }: MobileNavProps) {
   const [open, setOpen] = useState(false);
@@ -89,16 +71,42 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                     </AccordionPrimitive.Header>
                     <AccordionContent className="pb-0 pt-2">
                       <div className="flex flex-col space-y-2 pl-4 border-l ml-2">
-                        {services.map((service) => (
-                          <Link
-                            key={service.id}
-                            href={`/services?tab=${service.id}`}
-                            onClick={() => setOpen(false)}
-                            className='text-base font-medium text-muted-foreground transition-colors hover:text-primary'
-                          >
-                            {service.title}
-                          </Link>
-                        ))}
+                        <Accordion type="multiple" className="w-full">
+                          {services.map((service) => (
+                            <AccordionItem key={service.id} value={service.id} className="border-b-0">
+                                <AccordionPrimitive.Header className="flex w-full">
+                                    <div className="flex flex-1 items-center justify-between">
+                                        <Link
+                                            href={`/services?tab=${service.id}`}
+                                            onClick={() => setOpen(false)}
+                                            className='text-base font-medium text-muted-foreground transition-colors hover:text-primary py-2'
+                                        >
+                                            {service.title}
+                                        </Link>
+                                        <AccordionPrimitive.Trigger className="group p-2 -mr-2">
+                                            <Plus className="h-4 w-4 shrink-0 text-primary/80 transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={2}/>
+                                            <Minus className="h-4 w-4 shrink-0 text-primary/80 transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={2}/>
+                                            <span className="sr-only">Toggle {service.title} submenu</span>
+                                        </AccordionPrimitive.Trigger>
+                                    </div>
+                                </AccordionPrimitive.Header>
+                                <AccordionContent className="pb-0 pt-2">
+                                    <div className="flex flex-col space-y-2 pl-4 border-l ml-2">
+                                        {service.subServices.map((subService) => (
+                                            <Link
+                                                key={subService.title}
+                                                href={`/services?tab=${service.id}#${slugify(subService.title)}`}
+                                                onClick={() => setOpen(false)}
+                                                className='text-sm font-medium text-muted-foreground transition-colors hover:text-primary'
+                                            >
+                                                {subService.title}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
                       </div>
                     </AccordionContent>
                   </AccordionItem>

@@ -63,8 +63,8 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                           {link.label}
                         </Link>
                         <AccordionPrimitive.Trigger className="group p-2 -mr-2">
-                            <Plus className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={2}/>
-                            <Minus className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={2}/>
+                            <Plus className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={2}/>
+                            <Minus className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={2}/>
                             <span className="sr-only">Toggle services submenu</span>
                         </AccordionPrimitive.Trigger>
                       </div>

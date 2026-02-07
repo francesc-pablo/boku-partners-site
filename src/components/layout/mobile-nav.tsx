@@ -78,13 +78,6 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                     </AccordionTrigger>
                     <AccordionContent className="pb-0 pt-2">
                       <div className="flex flex-col space-y-2 pl-4 border-l ml-2">
-                         <Link
-                            href="/services"
-                            onClick={() => setOpen(false)}
-                            className='text-base font-medium transition-colors hover:text-primary text-muted-foreground'
-                        >
-                            All Services
-                        </Link>
                         {services.map((service) => (
                           <Link
                             key={service.id}

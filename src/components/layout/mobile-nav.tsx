@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu } from 'lucide-react';
+import { Menu, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Logo } from '../logo';
@@ -12,8 +12,8 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
 } from '@/components/ui/accordion';
+import * as AccordionPrimitive from '@radix-ui/react-accordion';
 
 type NavLink = {
   href: string;
@@ -68,14 +68,25 @@ export function MobileNav({ navLinks }: MobileNavProps) {
               return (
                 <Accordion key={link.href} type="single" collapsible className="w-full -my-3">
                   <AccordionItem value="services" className="border-b-0">
-                    <AccordionTrigger
-                      className={cn(
-                        'text-lg font-medium transition-colors hover:text-primary hover:no-underline py-2',
-                        pathname.startsWith(link.href) ? 'text-primary' : 'text-muted-foreground'
-                      )}
-                    >
-                     {link.label}
-                    </AccordionTrigger>
+                    <AccordionPrimitive.Header className="flex w-full">
+                      <div className="flex flex-1 items-center justify-between">
+                        <Link
+                          href={link.href}
+                          onClick={() => setOpen(false)}
+                          className={cn(
+                            'text-lg font-medium transition-colors hover:text-primary py-2',
+                            pathname.startsWith(link.href) ? 'text-primary' : 'text-muted-foreground'
+                          )}
+                        >
+                          {link.label}
+                        </Link>
+                        <AccordionPrimitive.Trigger className="group p-2 -mr-2">
+                            <Plus className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={2}/>
+                            <Minus className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={2}/>
+                            <span className="sr-only">Toggle services submenu</span>
+                        </AccordionPrimitive.Trigger>
+                      </div>
+                    </AccordionPrimitive.Header>
                     <AccordionContent className="pb-0 pt-2">
                       <div className="flex flex-col space-y-2 pl-4 border-l ml-2">
                         {services.map((service) => (

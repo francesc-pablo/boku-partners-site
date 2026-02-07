@@ -35,34 +35,40 @@ export function Footer() {
       <div className="container mx-auto py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           <div>
-            <h3 className="font-headline font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              {navLinks.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-headline font-semibold mb-4">Services</h3>
-            <ul className="space-y-2">
-                {services.map((service) => (
-                    <li key={service.id}>
-                        <Link href={`/services?tab=${service.id}`} className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                            {service.title}
-                        </Link>
-                    </li>
+            <div className="inline-block text-left">
+              <h3 className="font-headline font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                {navLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                      {link.label}
+                    </Link>
+                  </li>
                 ))}
-            </ul>
+              </ul>
+            </div>
           </div>
           <div>
-            <h3 className="font-headline font-semibold mb-4">Contact Info</h3>
-            <ul className="space-y-2 text-sm">
-              <li className="text-muted-foreground">Email: info@bokupartners.com</li>
-            </ul>
+            <div className="inline-block text-left">
+              <h3 className="font-headline font-semibold mb-4">Services</h3>
+              <ul className="space-y-2">
+                  {services.map((service) => (
+                      <li key={service.id}>
+                          <Link href={`/services?tab=${service.id}`} className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                              {service.title}
+                          </Link>
+                      </li>
+                  ))}
+              </ul>
+            </div>
+          </div>
+          <div>
+            <div className="inline-block text-left">
+              <h3 className="font-headline font-semibold mb-4">Contact Info</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="text-muted-foreground">Email: info@bokupartners.com</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

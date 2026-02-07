@@ -63,8 +63,8 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                           {link.label}
                         </Link>
                         <AccordionPrimitive.Trigger className="group p-2 -mr-2">
-                            <Plus className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={2}/>
-                            <Minus className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={2}/>
+                            <Plus className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={3}/>
+                            <Minus className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={3}/>
                             <span className="sr-only">Toggle services submenu</span>
                         </AccordionPrimitive.Trigger>
                       </div>
@@ -84,8 +84,8 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                                             {service.title}
                                         </Link>
                                         <AccordionPrimitive.Trigger className="group p-2 -mr-2">
-                                            <Plus className="h-4 w-4 shrink-0 text-primary/80 transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={2}/>
-                                            <Minus className="h-4 w-4 shrink-0 text-primary/80 transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={2}/>
+                                            <Plus className="h-4 w-4 shrink-0 text-primary/80 transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={3}/>
+                                            <Minus className="h-4 w-4 shrink-0 text-primary/80 transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={3}/>
                                             <span className="sr-only">Toggle {service.title} submenu</span>
                                         </AccordionPrimitive.Trigger>
                                     </div>

@@ -39,12 +39,12 @@ export function MobileNav({ navLinks }: MobileNavProps) {
       </SheetTrigger>
       <SheetContent side="left">
         <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-        <div className="mb-8 pl-7">
+        <div className="mb-8 pl-0">
             <Link href="/" className="flex items-center" onClick={() => setOpen(false)}>
               <Logo />
             </Link>
         </div>
-        <nav className="flex flex-col space-y-4 pl-14 pr-4">
+        <nav className="flex flex-col space-y-4 pl-7 pr-4">
           {navLinks.map((link) => {
             if (link.label === 'Services') {
               return (
@@ -63,8 +63,8 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                           {link.label}
                         </Link>
                         <AccordionPrimitive.Trigger className="group p-2 -mr-2">
-                            <Plus className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={3}/>
-                            <Minus className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={3}/>
+                            <Plus className="h-3.5 w-3.5 shrink-0 text-primary transition-transform duration-200 group-data-[state=open]:hidden" strokeWidth={5}/>
+                            <Minus className="h-3.5 w-3.5 shrink-0 text-primary transition-transform duration-200 hidden group-data-[state=open]:block" strokeWidth={5}/>
                             <span className="sr-only">Toggle services submenu</span>
                         </AccordionPrimitive.Trigger>
                       </div>
@@ -79,7 +79,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                                         <Link
                                             href={`/services?tab=${service.id}`}
                                             onClick={() => setOpen(false)}
-                                            className='text-base font-medium text-muted-foreground transition-colors hover:text-primary py-2'
+                                            className='text-sm font-medium text-muted-foreground transition-colors hover:text-primary py-2'
                                         >
                                             {service.title}
                                         </Link>
@@ -97,7 +97,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                                                 key={subService.title}
                                                 href={`/services?tab=${service.id}#${slugify(subService.title)}`}
                                                 onClick={() => setOpen(false)}
-                                                className='text-sm font-medium text-muted-foreground transition-colors hover:text-primary'
+                                                className='text-xs font-medium text-muted-foreground transition-colors hover:text-primary'
                                             >
                                                 {subService.title}
                                             </Link>

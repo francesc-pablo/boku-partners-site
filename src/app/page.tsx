@@ -24,18 +24,18 @@ const services = [
     title: 'Finance & Accounting',
     description: 'Our comprehensive financial services ensure your fiscal health and operational efficiency.',
     subServices: [
-      'CFO Advisory',
-      'Accounts Receivable',
-      'Accounts Payable',
       'Bookkeeping & Reporting',
       'Cash Flow Management',
+      'Accounts Receivable',
+      'Accounts Payable',
+      'Financial Leadership',
     ],
   },
   {
     id: 'human-resources',
     title: 'Human Resources',
     description: 'From advisory to operations, we manage your HR needs to build a thriving and compliant workforce.',
-    subServices: ['HR Advisory', 'HR Operations', 'Talent Acquisition & Development', 'Payroll'],
+    subServices: ['Talent Acquisition & Development', 'Payroll', 'HR Operations', 'HR Advisory'],
   },
   {
     id: 'marketing-ai',

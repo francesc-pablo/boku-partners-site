@@ -84,7 +84,7 @@ export default function Home() {
                 Strategic Partnership for Sustainable Growth
               </h1>
               <p className="text-lg md:text-xl max-w-3xl mx-auto mb-8">
-                Boku Partners delivers expert advisory and operational support across finance, HR, and marketing to scale your business.
+                Boku works alongside small and growing businesses to bring structure and clarity to finance, HR, and marketing operations.
               </p>
               <Button asChild size="lg" className="font-bold text-lg hover:bg-white hover:text-primary">
                 <Link href="/services">Our Services</Link>

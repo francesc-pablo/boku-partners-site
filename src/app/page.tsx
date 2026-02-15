@@ -11,44 +11,12 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { slugify } from '@/lib/utils';
-
-const services = [
-  {
-    id: 'consulting-transformation',
-    title: 'Consulting & Transformation',
-    description: 'We help you assess, strategize, and transform your core functions for optimal performance and growth.',
-    subServices: ['Function Assessments', 'M&A/Carveout', 'Strategy & Transformation'],
-  },
-  {
-    id: 'finance-accounting',
-    title: 'Finance & Accounting',
-    description: 'Our comprehensive financial services ensure your fiscal health and operational efficiency.',
-    subServices: [
-      'Bookkeeping & Reporting',
-      'Cash Flow Management',
-      'Accounts Receivable',
-      'Accounts Payable',
-      'Financial Leadership',
-    ],
-  },
-  {
-    id: 'human-resources',
-    title: 'Human Resources',
-    description: 'From advisory to operations, we manage your HR needs to build a thriving and compliant workforce.',
-    subServices: ['Talent Acquisition & Development', 'Payroll', 'HR Operations', 'HR Advisory'],
-  },
-  {
-    id: 'marketing-ai',
-    title: 'Marketing & AI',
-    description: 'Leverage the power of digital marketing and artificial intelligence to accelerate your market presence.',
-    subServices: ['Digital Marketing', 'AI Advisory'],
-  },
-];
+import { services } from '@/lib/services';
 
 const features = [
     {
-      title: 'Expert Guidance',
-      description: 'Leverage our deep industry knowledge to navigate complex business challenges and unlock strategic opportunities.'
+      title: 'Operator-Level Support',
+      description: 'We partner directly with operators and management to quickly diagnose and resolve operational challenges to ensure seamless day-to-day business performance.'
     },
     {
       title: 'Tailored Solutions',
@@ -119,12 +87,11 @@ export default function Home() {
                         {service.title}
                     </AccordionTrigger>
                     <AccordionContent className="prose prose-lg max-w-none text-muted-foreground pt-2">
-                        <p className="lead">{service.description}</p>
                         <ul className="list-disc pl-5 mt-4 space-y-2">
                         {service.subServices.map((sub) => (
-                            <li key={sub}>
-                            <Link href={`/services?tab=${service.id}#${slugify(sub)}`} className="hover:underline hover:text-primary transition-colors">
-                                {sub}
+                            <li key={sub.title}>
+                            <Link href={`/services?tab=${service.id}#${slugify(sub.title)}`} className="hover:underline hover:text-primary transition-colors">
+                                {sub.title}
                             </Link>
                             </li>
                         ))}

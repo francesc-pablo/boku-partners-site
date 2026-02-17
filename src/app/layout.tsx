@@ -6,8 +6,8 @@ import { Footer } from '@/components/layout/footer';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Boku Partners Web Presence',
-  description: 'Clean, modern corporate website for Boku Partners.',
+  title: 'Boku Partners',
+  description: 'Boku works alongside small and growing businesses to bring structure and clarity to finance, HR, and marketing operations.',
   icons: 'https://res.cloudinary.com/ddvlexmvj/image/upload/v1770400558/boku_horizontal_matched_font_burgundy_transparent_e9kzsz.png',
 };
 

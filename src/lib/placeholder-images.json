@@ -3,8 +3,8 @@
     {
       "id": "hero",
       "description": "Modern office meeting with professionals collaborating",
-      "imageUrl": "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8b2ZmaWNlJTIwbWVldGluZ3xlbnwwfHx8fDE3NzAwNzIwMzd8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "office meeting"
+      "imageUrl": "https://res.cloudinary.com/ddvlexmvj/image/upload/v1772412948/banner3_yf249f.jpg",
+      "imageHint": "growth"
     }
   ]
 }

@@ -6,6 +6,11 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { MobileNav } from './mobile-nav';
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { Button } from '../ui/button';
+import { auth } from '@/firebase/client';
+import { signOut } from 'firebase/auth';
+import { Skeleton } from '../ui/skeleton';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -17,6 +22,7 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
   const headerHeight = 80; // h-20 is 5rem which is 80px
@@ -39,6 +45,9 @@ export function Header() {
     };
   }, []);
 
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
 
   return (
     <header
@@ -57,7 +66,7 @@ export function Header() {
         <div className="flex-grow" />
 
         <div className="flex items-center">
-            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium pr-12">
+            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -73,6 +82,22 @@ export function Header() {
             </nav>
             <div className="md:hidden pr-7">
               <MobileNav navLinks={navLinks} />
+            </div>
+            <div className="hidden md:flex items-center pl-6">
+              {loading ? (
+                <Skeleton className="h-10 w-24" />
+              ) : user ? (
+                <Button variant="outline" onClick={handleLogout}>Logout</Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </div>
+              )}
             </div>
         </div>
       </div>

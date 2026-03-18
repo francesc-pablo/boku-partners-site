@@ -1,19 +1,55 @@
-import { cookies, headers } from 'next/headers';
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ClientDashboard } from './_components/client-dashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ClientsPage() {
-  const cookieStore = cookies();
-  const accessToken = cookieStore.get('qb_access_token');
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [accessToken, setAccessToken] = useState<string | undefined>(undefined);
+  const [redirectUri, setRedirectUri] = useState('');
 
-  // Dynamically determine the redirect URI
-  const headersList = headers();
-  const host = headersList.get('x-forwarded-host') || headersList.get('host');
-  const protocol = headersList.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
-  const redirectUri = `${protocol}://${host}/api/auth/callback`;
+  // This effect handles authentication check
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
+  // This effect runs on the client to get cookie and dynamic host
+  useEffect(() => {
+    // Manually get cookie on client-side
+    const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+    };
+    setAccessToken(getCookie('qb_access_token'));
+
+    // Dynamically determine the redirect URI
+    if (typeof window !== 'undefined') {
+      const host = window.location.host;
+      const protocol = window.location.protocol;
+      setRedirectUri(`${protocol}//${host}/api/auth/callback`);
+    }
+  }, [user]); // Rerun when user logs in
+
+  if (loading || !user) {
+    return (
+       <section className="container mx-auto">
+         <div className="flex flex-col items-center gap-8">
+            <Skeleton className="h-40 w-full max-w-md" />
+            <Skeleton className="h-64 w-full max-w-2xl" />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -44,22 +80,24 @@ export default function ClientsPage() {
                 </Button>
                 </CardContent>
             </Card>
-            <Card className="max-w-2xl mx-auto w-full bg-secondary">
-                 <CardHeader>
-                    <CardTitle className="text-xl">Setup Instructions for Developers</CardTitle>
-                    <CardDescription>
-                        To complete the connection, add the following URL to your Intuit Developer App's "Redirect URIs" list.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="bg-background p-4 rounded-md">
-                        <p className="font-mono text-sm break-all select-all">{redirectUri}</p>
-                    </div>
-                     <p className="text-xs text-muted-foreground mt-4">
-                        The URI above is for your current development environment. For your live site, you will also need to add your production URL (`https://www.bokupartners.com/api/auth/callback`) to your Intuit settings.
-                    </p>
-                </CardContent>
-            </Card>
+            {redirectUri && (
+                 <Card className="max-w-2xl mx-auto w-full bg-secondary">
+                    <CardHeader>
+                        <CardTitle className="text-xl">Setup Instructions for Developers</CardTitle>
+                        <CardDescription>
+                            To complete the connection, add the following URL to your Intuit Developer App's "Redirect URIs" list.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="bg-background p-4 rounded-md">
+                            <p className="font-mono text-sm break-all select-all">{redirectUri}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-4">
+                            The URI above is for your current development environment. For your live site, you will also need to add your production URL (`https://www.bokupartners.com/api/auth/callback`) to your Intuit settings.
+                        </p>
+                    </CardContent>
+                </Card>
+            )}
           </div>
         )}
       </section>

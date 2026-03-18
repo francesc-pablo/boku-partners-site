@@ -32,10 +32,12 @@ const formatCurrency = (value: number) => {
 function extractPnlValue(pnl: any, name: string): number {
   if (!pnl?.Rows?.Row) return 0;
 
-  const findRow = (rows: any[], target: string): any => {
-    for (const row of rows) {
+  const findRow = (rows: any, target: string): any => {
+    const rowsArray = Array.isArray(rows) ? rows : [rows];
+    for (const row of rowsArray) {
+      if (!row) continue;
       const rowName = row.Header?.ColData?.[0]?.value || row.ColData?.[0]?.value;
-      if (rowName?.trim() === target.trim()) {
+      if (rowName && rowName.trim() === target.trim()) {
         return row;
       }
       if (row.Rows?.Row) {
@@ -87,8 +89,11 @@ export function ClientDashboard() {
   const netIncome = data?.pnl ? extractPnlValue(data.pnl, 'Net Income') : 0;
 
   const chartData = [
-    { name: 'Total Income', value: totalIncome },
-    { name: 'Total Expenses', value: totalExpenses },
+    {
+      name: 'P&L',
+      'Total Income': totalIncome,
+      'Total Expenses': totalExpenses,
+    },
   ];
 
   const customers: Customer[] = data?.customers?.QueryResponse?.Customer || [];

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type ChartData = {
   name: string;
-  value: number;
+  'Total Income': number;
+  'Total Expenses': number;
 }[];
 
 export function RevenueChart({ data }: { data: ChartData }) {
@@ -29,8 +30,8 @@ export function RevenueChart({ data }: { data: ChartData }) {
               formatter={(value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}
             />
             <Legend />
-            <Bar dataKey="value" fill="hsl(var(--chart-1))" name="Total Income" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="value" fill="hsl(var(--chart-2))" name="Total Expenses" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Total Income" fill="hsl(var(--chart-1))" name="Total Income" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Total Expenses" fill="hsl(var(--chart-2))" name="Total Expenses" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

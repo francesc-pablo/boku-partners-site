@@ -10,9 +10,8 @@ export default function ClientsPage() {
 
   // Dynamically determine the redirect URI
   const headersList = headers();
-  const host = headersList.get('host');
-  // Use 'https' in production/studio, 'http' for localhost
-  const protocol = host?.includes('localhost') ? 'http' : 'https';
+  const host = headersList.get('x-forwarded-host') || headersList.get('host');
+  const protocol = headersList.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
   const redirectUri = `${protocol}://${host}/api/auth/callback`;
 
 

@@ -1,11 +1,11 @@
 'use server';
 
 import axios from 'axios';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
-  const { searchParams, origin } = new URL(req.url);
+  const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const realmId = searchParams.get('realmId');
   const state = searchParams.get('state');
@@ -18,7 +18,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Missing code or realmId' }, { status: 400 });
   }
 
-  const redirectUri = `${origin}/api/auth/callback`;
+  const headersList = headers();
+  const host = headersList.get('x-forwarded-host') || headersList.get('host');
+  const protocol = headersList.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+  const redirectUri = `${protocol}://${host}/api/auth/callback`;
 
   try {
     const response = await axios.post(
@@ -49,10 +52,13 @@ export async function GET(req: Request) {
     cookieStore.set('qb_refresh_token', refresh_token, cookieOptions);
     cookieStore.set('qb_realm_id', realmId, cookieOptions);
     
-    return NextResponse.redirect(new URL('/clients', req.url));
+    return NextResponse.redirect(`${protocol}://${host}/clients`);
 
   } catch (error) {
     console.error('QuickBooks callback error:', error);
+    if (axios.isAxiosError(error) && error.response) {
+      console.error('QuickBooks API Error Response:', error.response.data);
+    }
     return NextResponse.json({ error: 'Failed to exchange authorization code for token.' }, { status: 500 });
   }
 }

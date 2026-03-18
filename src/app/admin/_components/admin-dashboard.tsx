@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, onSnapshot, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { firestore } from '@/firebase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

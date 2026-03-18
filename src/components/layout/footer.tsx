@@ -6,6 +6,7 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/services', label: 'Services' },
   { href: '/industry-focus', label: 'Industry Focus' },
+  { href: '/clients', label: 'Clients' },
   { href: '/contact', label: 'Contact' },
 ];
 

@@ -1,0 +1,56 @@
+'use server';
+
+import axios from 'axios';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const code = searchParams.get('code');
+  const realmId = searchParams.get('realmId');
+  const state = searchParams.get('state');
+
+  if (state !== '123') {
+    return NextResponse.json({ error: 'Invalid state parameter' }, { status: 400 });
+  }
+
+  if (!code || !realmId) {
+    return NextResponse.json({ error: 'Missing code or realmId' }, { status: 400 });
+  }
+
+  try {
+    const response = await axios.post(
+      'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: code!,
+        redirect_uri: process.env.QB_REDIRECT_URI!,
+      }),
+      {
+        headers: {
+          Authorization:
+            'Basic ' +
+            Buffer.from(
+              `${process.env.QB_CLIENT_ID}:${process.env.QB_CLIENT_SECRET}`
+            ).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+
+    const { access_token, refresh_token } = response.data;
+
+    const cookieStore = cookies();
+    const cookieOptions = { secure: true, httpOnly: true, path: '/', sameSite: 'lax' as const };
+
+    cookieStore.set('qb_access_token', access_token, cookieOptions);
+    cookieStore.set('qb_refresh_token', refresh_token, cookieOptions);
+    cookieStore.set('qb_realm_id', realmId, cookieOptions);
+    
+    return NextResponse.redirect(new URL('/clients', req.url));
+
+  } catch (error) {
+    console.error('QuickBooks callback error:', error);
+    return NextResponse.json({ error: 'Failed to exchange authorization code for token.' }, { status: 500 });
+  }
+}

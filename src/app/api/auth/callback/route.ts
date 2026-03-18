@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
+  const { searchParams, origin } = new URL(req.url);
   const code = searchParams.get('code');
   const realmId = searchParams.get('realmId');
   const state = searchParams.get('state');
@@ -18,13 +18,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Missing code or realmId' }, { status: 400 });
   }
 
+  const redirectUri = `${origin}/api/auth/callback`;
+
   try {
     const response = await axios.post(
       'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
       new URLSearchParams({
         grant_type: 'authorization_code',
         code: code!,
-        redirect_uri: process.env.QB_REDIRECT_URI!,
+        redirect_uri: redirectUri,
       }),
       {
         headers: {

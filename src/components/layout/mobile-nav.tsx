@@ -32,7 +32,7 @@ interface MobileNavProps {
 export function MobileNav({ navLinks }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading } = useAuth();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -123,6 +123,18 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                   )}
                 >
                   Account
+                </Link>
+            )}
+            {userProfile?.role === 'admin' && (
+                <Link
+                    href="/admin"
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                        'text-lg font-medium transition-colors hover:text-primary',
+                        pathname === '/admin' ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                >
+                    Admin
                 </Link>
             )}
           </nav>

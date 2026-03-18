@@ -29,6 +29,7 @@ export function SignupForm() {
       await setDoc(doc(firestore, 'users', user.uid), {
         uid: user.uid,
         email: user.email,
+        role: 'user', // Default role for new users
         createdAt: serverTimestamp(),
       });
 

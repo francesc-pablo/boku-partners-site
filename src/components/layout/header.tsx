@@ -22,7 +22,7 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
   const headerHeight = 80; // h-20 is 5rem which is 80px
@@ -79,6 +79,17 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+              {userProfile?.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  className={cn(
+                    'transition-colors hover:text-primary',
+                    pathname === '/admin' ? 'text-primary' : 'text-muted-foreground'
+                  )}
+                >
+                  Admin
+                </Link>
+              )}
             </nav>
             <div className="md:hidden pr-7">
               <MobileNav navLinks={navLinks} />

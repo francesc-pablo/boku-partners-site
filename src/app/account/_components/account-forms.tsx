@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 function UpdateProfileForm() {
   const { user } = useAuth();
@@ -129,12 +130,18 @@ function ChangePasswordForm() {
 
 
 export function AccountForms() {
+    const { userProfile } = useAuth();
     return (
         <div className="grid md:grid-cols-2 gap-16 max-w-4xl mx-auto">
             <Card>
                 <CardHeader>
-                    <CardTitle>Profile Details</CardTitle>
-                    <CardDescription>Update your name and email address.</CardDescription>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle>Profile Details</CardTitle>
+                            <CardDescription>Update your name and email address.</CardDescription>
+                        </div>
+                        {userProfile?.role && <Badge variant={userProfile.role === 'admin' ? 'default' : 'secondary'}>{userProfile.role}</Badge>}
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <UpdateProfileForm />

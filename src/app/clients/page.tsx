@@ -56,7 +56,7 @@ export default function ClientsPage() {
                         <p className="font-mono text-sm break-all select-all">{redirectUri}</p>
                     </div>
                      <p className="text-xs text-muted-foreground mt-4">
-                        This URL is specific to your current development environment. You will also need to add your production URL (`https://www.bokupartners.com/api/auth/callback`) and any localhost URLs (`http://localhost:9002/api/auth/callback`) to your Intuit settings.
+                        The URI above is for your current development environment. For your live site, you will also need to add your production URL (`https://www.bokupartners.com/api/auth/callback`) to your Intuit settings.
                     </p>
                 </CardContent>
             </Card>

@@ -87,16 +87,16 @@ export function Header() {
               {loading ? (
                 <Skeleton className="h-10 w-24" />
               ) : user ? (
-                <Button variant="outline" onClick={handleLogout}>Logout</Button>
-              ) : (
-                <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2">
                   <Button variant="ghost" asChild>
-                    <Link href="/login">Login</Link>
+                    <Link href="/account">Account</Link>
                   </Button>
-                  <Button asChild>
-                    <Link href="/signup">Sign Up</Link>
-                  </Button>
+                  <Button variant="outline" onClick={handleLogout}>Logout</Button>
                 </div>
+              ) : (
+                <Button asChild>
+                  <Link href="/login">Login</Link>
+                </Button>
               )}
             </div>
         </div>

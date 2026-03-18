@@ -113,6 +113,18 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                 </Link>
               );
             })}
+             {user && (
+                 <Link
+                  href="/account"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    'text-lg font-medium transition-colors hover:text-primary',
+                    pathname === '/account' ? 'text-primary' : 'text-muted-foreground'
+                  )}
+                >
+                  Account
+                </Link>
+            )}
           </nav>
           <div className="flex-grow" />
           <Separator className="my-4" />
@@ -120,14 +132,9 @@ export function MobileNav({ navLinks }: MobileNavProps) {
               {loading ? null : user ? (
                  <Button variant="outline" onClick={handleLogout} className="w-full">Logout</Button>
               ) : (
-                <>
-                  <Button variant="ghost" asChild className="w-full text-lg">
+                  <Button asChild className="w-full text-lg">
                     <Link href="/login" onClick={() => setOpen(false)}>Login</Link>
                   </Button>
-                  <Button asChild className="w-full text-lg">
-                    <Link href="/signup" onClick={() => setOpen(false)}>Sign Up</Link>
-                  </Button>
-                </>
               )}
             </div>
         </div>

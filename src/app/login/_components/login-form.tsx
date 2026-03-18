@@ -48,12 +48,6 @@ export function LoginForm() {
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? 'Logging in...' : 'Login'}
       </Button>
-      <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{' '}
-        <Link href="/signup" className="underline hover:text-primary">
-          Sign up
-        </Link>
-      </p>
     </form>
   );
 }

@@ -15,10 +15,6 @@ import {
 } from '@/components/ui/accordion';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { services } from '@/lib/services';
-import { useAuth } from '@/hooks/use-auth';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/firebase/client';
-import { Separator } from '../ui/separator';
 
 type NavLink = {
   href: string;
@@ -32,13 +28,6 @@ interface MobileNavProps {
 export function MobileNav({ navLinks }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { user, userProfile, loading } = useAuth();
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    setOpen(false);
-  };
-
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -113,42 +102,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
                 </Link>
               );
             })}
-             {user && (
-                 <Link
-                  href="/account"
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    'text-lg font-medium transition-colors hover:text-primary',
-                    pathname === '/account' ? 'text-primary' : 'text-muted-foreground'
-                  )}
-                >
-                  Account
-                </Link>
-            )}
-            {userProfile?.role === 'admin' && (
-                <Link
-                    href="/admin"
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                        'text-lg font-medium transition-colors hover:text-primary',
-                        pathname === '/admin' ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                >
-                    Admin
-                </Link>
-            )}
           </nav>
-          <div className="flex-grow" />
-          <Separator className="my-4" />
-           <div className="flex flex-col space-y-4 px-7">
-              {loading ? null : user ? (
-                 <Button variant="outline" onClick={handleLogout} className="w-full">Logout</Button>
-              ) : (
-                  <Button asChild className="w-full text-lg">
-                    <Link href="/login" onClick={() => setOpen(false)}>Login</Link>
-                  </Button>
-              )}
-            </div>
         </div>
       </SheetContent>
     </Sheet>

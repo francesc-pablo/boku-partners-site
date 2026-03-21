@@ -6,23 +6,16 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { MobileNav } from './mobile-nav';
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import { Button } from '../ui/button';
-import { auth } from '@/firebase/client';
-import { signOut } from 'firebase/auth';
-import { Skeleton } from '../ui/skeleton';
 
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/services', label: 'Services' },
   { href: '/industry-focus', label: 'Industry Focus' },
   { href: '/contact', label: 'Contact' },
-  { href: '/clients', label: 'Clients' },
 ];
 
 export function Header() {
   const pathname = usePathname();
-  const { user, userProfile, loading } = useAuth();
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
   const headerHeight = 80; // h-20 is 5rem which is 80px
@@ -44,10 +37,6 @@ export function Header() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
-
-  const handleLogout = async () => {
-    await signOut(auth);
-  };
 
   return (
     <header
@@ -79,36 +68,9 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-              {userProfile?.role === 'admin' && (
-                <Link
-                  href="/admin"
-                  className={cn(
-                    'transition-colors hover:text-primary',
-                    pathname === '/admin' ? 'text-primary' : 'text-muted-foreground'
-                  )}
-                >
-                  Admin
-                </Link>
-              )}
             </nav>
             <div className="md:hidden pr-7">
               <MobileNav navLinks={navLinks} />
-            </div>
-            <div className="hidden md:flex items-center pl-6">
-              {loading ? (
-                <Skeleton className="h-10 w-24" />
-              ) : user ? (
-                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" asChild>
-                    <Link href="/account">Account</Link>
-                  </Button>
-                  <Button variant="outline" onClick={handleLogout}>Logout</Button>
-                </div>
-              ) : (
-                <Button asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-              )}
             </div>
         </div>
       </div>

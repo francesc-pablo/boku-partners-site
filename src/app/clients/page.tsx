@@ -4,23 +4,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ClientDashboard } from './_components/client-dashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ClientsPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
   const [accessToken, setAccessToken] = useState<string | undefined>(undefined);
   const [redirectUri, setRedirectUri] = useState('');
-
-  // This effect handles authentication check
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
 
   // This effect runs on the client to get cookie and dynamic host
   useEffect(() => {
@@ -38,18 +26,7 @@ export default function ClientsPage() {
       const protocol = window.location.protocol;
       setRedirectUri(`${protocol}//${host}/api/auth/callback`);
     }
-  }, [user]); // Rerun when user logs in
-
-  if (loading || !user) {
-    return (
-       <section className="container mx-auto">
-         <div className="flex flex-col items-center gap-8">
-            <Skeleton className="h-40 w-full max-w-md" />
-            <Skeleton className="h-64 w-full max-w-2xl" />
-        </div>
-      </section>
-    );
-  }
+  }, []);
 
   return (
     <>

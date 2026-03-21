@@ -56,7 +56,7 @@ export function Header() {
         <div className="flex-grow" />
 
         <div className="flex items-center">
-            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium pr-4">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}

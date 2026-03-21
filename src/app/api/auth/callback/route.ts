@@ -46,7 +46,11 @@ export async function GET(req: Request) {
     const { access_token } = response.data; // We no longer use the refresh_token
 
     const cookieStore = cookies();
-    const cookieOptions = { secure: true, httpOnly: true, path: '/', sameSite: 'lax' as const };
+    const cookieOptions = { 
+        secure: protocol === 'https', 
+        path: '/', 
+        sameSite: 'lax' as const 
+    };
 
     cookieStore.set('qb_access_token', access_token, cookieOptions);
     cookieStore.set('qb_realm_id', realmId, cookieOptions);

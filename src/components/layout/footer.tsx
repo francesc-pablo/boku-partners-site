@@ -70,6 +70,16 @@ export function Footer() {
                 <li className="text-muted-foreground">Email: info@bokupartners.com</li>
               </ul>
             </div>
+            <div className="md:inline-block text-left mt-8">
+              <h3 className="font-headline font-semibold mb-4">Legal</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/eula" className="text-muted-foreground hover:text-primary transition-colors">
+                    EULA
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

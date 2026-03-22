@@ -69,7 +69,7 @@ type ParsedData = {
     totalOpenBills: number;
 }
 
-const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 const formatDate = (dateString: string) => format(new Date(dateString), 'MMM d, yyyy');
 
 

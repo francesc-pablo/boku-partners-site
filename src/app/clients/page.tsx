@@ -70,7 +70,7 @@ export default function ClientsPage() {
                             <p className="font-mono text-sm break-all select-all">{redirectUri}</p>
                         </div>
                         <p className="text-xs text-muted-foreground mt-4">
-                            The URI above is for your current development environment. For your live site, you will also need to add your production URL (`https://www.bokupartners.com/api/auth/callback`) to your Intuit settings.
+                           The URI above is dynamically generated for your current development environment. For your live site, you will need to add your production redirect URI to your Intuit app settings as well.
                         </p>
                     </CardContent>
                 </Card>

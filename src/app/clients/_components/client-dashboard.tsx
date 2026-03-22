@@ -6,7 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { KpiCard } from './kpi-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BalanceSheetChart, PnlChart } from './dashboard-charts';
-import { DollarSign, TrendingUp, Wallet, Landmark } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, Landmark, FileText } from 'lucide-react';
+import { format } from 'date-fns';
 
 // TYPES
 type DashboardData = {
@@ -14,14 +15,23 @@ type DashboardData = {
   balance: any;
   cashflow: any;
   customers: any;
+  invoices: any;
 };
 
 type Customer = {
   Id: string;
   DisplayName: string;
   PrimaryEmailAddr?: { Address: string };
-  PrimaryPhone?: { FreeFormNumber: string };
   Balance: number;
+};
+
+type Invoice = {
+    Id: string;
+    DocNumber: string;
+    TxnDate: string;
+    CustomerRef: { name: string };
+    TotalAmt: number;
+    Balance: number;
 };
 
 type ParsedData = {
@@ -36,9 +46,12 @@ type ParsedData = {
     cash: number;
     netCashFromOps: number;
     assetBreakdown: {name: string, value: number}[];
+    totalOpenInvoices: number;
 }
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+const formatDate = (dateString: string) => format(new Date(dateString), 'MMM d, yyyy');
+
 
 // PARSING HELPERS
 function flattenReportRows(rows: any[]): { name: string; value: string }[] {
@@ -70,7 +83,7 @@ function flattenReportRows(rows: any[]): { name: string; value: string }[] {
 }
 
 function parseQuickBooksData(data: DashboardData): ParsedData | null {
-    if (!data.pnl || !data.balance || !data.cashflow) return null;
+    if (!data.pnl || !data.balance || !data.cashflow || !data.invoices) return null;
 
     const pnlRows = flattenReportRows(data.pnl.Rows?.Row);
     const balanceRows = flattenReportRows(data.balance.Rows?.Row);
@@ -105,6 +118,10 @@ function parseQuickBooksData(data: DashboardData): ParsedData | null {
 
     // Cash Flow
     const netCashFromOps = getValue(cashflowRows, 'Net Cash Provided by Operating Activities');
+    
+    // Invoices
+    const invoices: Invoice[] = data.invoices?.QueryResponse?.Invoice || [];
+    const totalOpenInvoices = invoices.reduce((acc, inv) => acc + inv.Balance, 0);
 
     return {
         totalIncome,
@@ -117,7 +134,8 @@ function parseQuickBooksData(data: DashboardData): ParsedData | null {
         currentAssets,
         cash,
         netCashFromOps,
-        assetBreakdown
+        assetBreakdown,
+        totalOpenInvoices
     };
 }
 
@@ -159,16 +177,18 @@ export function ClientDashboard() {
   }] : [];
 
   const customers: Customer[] = data?.customers?.QueryResponse?.Customer || [];
+  const invoices: Invoice[] = data?.invoices?.QueryResponse?.Invoice || [];
 
   return (
     <div className="space-y-6">
        {error && <p className="text-destructive text-center p-4 bg-destructive/10 rounded-md">Error: {error}</p>}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <KpiCard title="Total Revenue" value={loading ? '...' : formatCurrency(parsedData?.totalIncome || 0)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
         <KpiCard title="Gross Profit" value={loading ? '...' : formatCurrency(parsedData?.grossProfit || 0)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
         <KpiCard title="Net Income" value={loading ? '...' : formatCurrency(parsedData?.netIncome || 0)} icon={<Wallet className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
         <KpiCard title="Total Assets" value={loading ? '...' : formatCurrency(parsedData?.totalAssets || 0)} icon={<Landmark className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
+        <KpiCard title="Open Invoices" value={loading ? '...' : formatCurrency(parsedData?.totalOpenInvoices || 0)} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
@@ -180,53 +200,102 @@ export function ClientDashboard() {
          </div>
       </div>
       
-      <Card>
-        <CardHeader>
-            <CardTitle>Customers</CardTitle>
-            <CardDescription>A list of your customers from QuickBooks.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            {loading ? (
-            <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-            </div>
-            ) : (
-            <Table>
-            <TableHeader>
-                <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead className="text-right">Balance</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {customers.length > 0 ? (
-                customers.slice(0, 10).map((customer) => (
-                    <TableRow key={customer.Id}>
-                    <TableCell className="font-medium">{customer.DisplayName}</TableCell>
-                    <TableCell>{customer.PrimaryEmailAddr?.Address || 'N/A'}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(customer.Balance)}</TableCell>
-                    </TableRow>
-                ))
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+            <CardHeader>
+                <CardTitle>Recent Invoices</CardTitle>
+                <CardDescription>Your 5 most recent invoices from QuickBooks.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                    <div className="space-y-2">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
                 ) : (
-                <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24">
-                    No customers found.
-                    </TableCell>
-                </TableRow>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Invoice #</TableHead>
+                                <TableHead>Customer</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {invoices.length > 0 ? (
+                                invoices.slice(0, 5).map((invoice) => (
+                                    <TableRow key={invoice.Id}>
+                                        <TableCell className="font-medium">#{invoice.DocNumber}</TableCell>
+                                        <TableCell>{invoice.CustomerRef.name}</TableCell>
+                                        <TableCell>{formatDate(invoice.TxnDate)}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(invoice.TotalAmt)}</TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24">
+                                        No invoices found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
                 )}
-            </TableBody>
-            </Table>
-            )}
-            {customers.length > 10 && (
-                <p className="text-center text-sm text-muted-foreground mt-4">
-                    And {customers.length - 10} more...
-                </p>
-            )}
-        </CardContent>
+                 {invoices.length > 5 && (
+                    <p className="text-center text-sm text-muted-foreground mt-4">
+                        And {invoices.length - 5} more...
+                    </p>
+                )}
+            </CardContent>
         </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Top Customers</CardTitle>
+                <CardDescription>Your customers with the highest open balance.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                ) : (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {customers.length > 0 ? (
+                    customers.sort((a,b) => b.Balance - a.Balance).slice(0, 5).map((customer) => (
+                        <TableRow key={customer.Id}>
+                        <TableCell className="font-medium">{customer.DisplayName}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(customer.Balance)}</TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={2} className="text-center h-24">
+                        No customers found.
+                        </TableCell>
+                    </TableRow>
+                    )}
+                </TableBody>
+                </Table>
+                )}
+                {customers.length > 5 && (
+                    <p className="text-center text-sm text-muted-foreground mt-4">
+                        And {customers.length - 5} more...
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getProfitAndLoss, getBalanceSheet, getCashFlow, getCustomers } from '@/lib/quickbooks';
+import { getProfitAndLoss, getBalanceSheet, getCashFlow, getCustomers, getInvoices } from '@/lib/quickbooks';
 
 export async function GET() {
   // Use Promise.allSettled to prevent one failed request from blocking others
@@ -7,10 +7,11 @@ export async function GET() {
     getProfitAndLoss(),
     getBalanceSheet(),
     getCashFlow(),
-    getCustomers()
+    getCustomers(),
+    getInvoices()
   ]);
 
-  const [pnlRes, balanceRes, cashflowRes, customersRes] = results;
+  const [pnlRes, balanceRes, cashflowRes, customersRes, invoicesRes] = results;
 
   const getError = (res: PromiseSettledResult<any>) => {
     if (res.status === 'rejected' || (res.status === 'fulfilled' && res.value.error)) {
@@ -29,6 +30,11 @@ export async function GET() {
       return NextResponse.json({ error: `Customers Error: ${customersError.error}` }, { status: customersError.status });
   }
 
+  const invoicesError = getError(invoicesRes);
+   if (invoicesError) {
+      return NextResponse.json({ error: `Invoices Error: ${invoicesError.error}` }, { status: invoicesError.status });
+  }
+
   // Balance Sheet and Cash Flow are secondary, so we can check for them but not fail the whole request
   const balanceError = getError(balanceRes);
   if (balanceError) console.error("Balance Sheet Error:", balanceError.error);
@@ -41,5 +47,6 @@ export async function GET() {
     balance: balanceRes.status === 'fulfilled' ? balanceRes.value.data : null,
     cashflow: cashflowRes.status === 'fulfilled' ? cashflowRes.value.data : null,
     customers: customersRes.status === 'fulfilled' ? customersRes.value.data : null,
+    invoices: invoicesRes.status === 'fulfilled' ? invoicesRes.value.data : null,
   });
 }

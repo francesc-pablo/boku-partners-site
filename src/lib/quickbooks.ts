@@ -66,6 +66,11 @@ export async function getCashFlow() {
   return makeQBRequest({ endpoint: 'reports/CashFlow' });
 }
 
+// Entity functions
 export async function getCustomers() {
     return makeQBRequest({ endpoint: 'query?query=select * from Customer' });
+}
+
+export async function getInvoices() {
+    return makeQBRequest({ endpoint: 'query?query=select * from Invoice' });
 }

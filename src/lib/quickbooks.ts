@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import { cookies } from 'next/headers';
+import { subMonths, startOfMonth, endOfMonth, format } from 'date-fns';
 
 const QB_API_BASE_URL = 'https://sandbox-quickbooks.api.intuit.com/v3/company';
 
@@ -81,4 +82,24 @@ export async function getVendors() {
 
 export async function getBills() {
     return makeQBRequest({ endpoint: 'query?query=select * from Bill' });
+}
+
+export async function getMonthlyPnlCashRaw(months = 6) {
+    const today = new Date();
+    const reportPromises = [];
+
+    for (let i = months - 1; i >= 0; i--) {
+        const targetDate = subMonths(today, i);
+        const startDate = format(startOfMonth(targetDate), 'yyyy-MM-dd');
+        const endDate = format(endOfMonth(targetDate), 'yyyy-MM-dd');
+        const monthName = format(targetDate, 'MMM');
+
+        const endpoint = `reports/ProfitAndLoss?start_date=${startDate}&end_date=${endDate}&accounting_method=Cash`;
+        reportPromises.push(makeQBRequest({ endpoint }).then(res => ({ ...res, monthName })));
+    }
+    
+    const results = await Promise.all(reportPromises);
+
+    // We will return the raw data and let the client parse it
+    return { data: results };
 }

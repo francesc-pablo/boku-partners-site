@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { KpiCard } from './kpi-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BalanceSheetChart, PnlChart } from './dashboard-charts';
+import { BalanceSheetChart, PnlChart, MonthlyCashChart } from './dashboard-charts';
 import { DollarSign, TrendingUp, Wallet, Landmark, FileText, Activity, Users } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -111,7 +111,11 @@ function parseQuickBooksData(data: DashboardData): ParsedData | null {
 
     const getValue = (rows: {name: string, value: string}[], name: string) => {
         const row = rows.find(r => r.name === name);
-        return parseFloat(row?.value || '0');
+        const rawValue = row?.value?.replace(/,/g, '') || '0';
+        if (rawValue.startsWith('(') && rawValue.endsWith(')')) {
+            return -parseFloat(rawValue.replace(/[()]/g, ''));
+        }
+        return parseFloat(rawValue);
     }
 
     // P&L
@@ -173,6 +177,18 @@ export function ClientDashboard() {
   const [pnlRows, setPnlRows] = useState<{name: string; value: string}[]>([]);
   const [balanceSheetRows, setBalanceSheetRows] = useState<{name: string; value: string}[]>([]);
   const [cashFlowRows, setCashFlowRows] = useState<{name: string; value: string}[]>([]);
+  
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [monthlyLoading, setMonthlyLoading] = useState(true);
+
+  const getValue = (rows: {name: string, value: string}[], name: string) => {
+    const row = rows.find(r => r.name === name);
+    const rawValue = row?.value?.replace(/,/g, '') || '0';
+    if (rawValue.startsWith('(') && rawValue.endsWith(')')) {
+        return -parseFloat(rawValue.replace(/[()]/g, ''));
+    }
+    return parseFloat(rawValue);
+  }
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -205,7 +221,42 @@ export function ClientDashboard() {
         setLoading(false);
       }
     }
+    
+    async function fetchMonthlyData() {
+        try {
+            setMonthlyLoading(true);
+            const res = await fetch('/api/quickbooks/monthly-pnl');
+            if (!res.ok) {
+                throw new Error('Failed to fetch monthly data');
+            }
+            const rawReports = await res.json();
+            
+            const parsedMonthlyData = rawReports.map((report: any) => {
+                if (report.error || !report.data) {
+                    return { name: report.monthName, 'Money In': 0, 'Money Out': 0 };
+                }
+                const pnlRows = flattenReportRows(report.data.Rows?.Row);
+                const totalIncome = getValue(pnlRows, 'Total Income');
+                const totalExpenses = getValue(pnlRows, 'Total Expenses');
+                return {
+                    name: report.monthName,
+                    'Money In': totalIncome,
+                    'Money Out': totalExpenses,
+                };
+            });
+
+            setMonthlyData(parsedMonthlyData);
+
+        } catch (e) {
+            // silently fail for this chart for now
+            console.error("Failed to load monthly cash flow chart", e);
+        } finally {
+            setMonthlyLoading(false);
+        }
+    }
+
     fetchDashboardData();
+    fetchMonthlyData();
   }, []);
 
   const pnlChartData = parsedData ? [{
@@ -236,6 +287,10 @@ export function ClientDashboard() {
         <KpiCard title="Open Bills" value={loading ? '...' : formatCurrency(parsedData?.totalOpenBills || 0)} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
         <KpiCard title="Total Customers" value={loading ? '...' : customers.length.toString()} icon={<Users className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
       </div>
+
+       <div className="grid gap-4 lg:grid-cols-1">
+            {monthlyLoading ? <Skeleton className="h-[380px] w-full" /> : <MonthlyCashChart data={monthlyData} />}
+        </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
          <div className="lg:col-span-3">

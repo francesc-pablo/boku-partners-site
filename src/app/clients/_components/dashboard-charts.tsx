@@ -154,3 +154,42 @@ export function BalanceSheetChart({ data }: { data: AssetData[] }) {
         </Card>
     );
 }
+
+
+// Monthly Cash Flow Chart
+type MonthlyChartData = {
+  name: string;
+  'Money In': number;
+  'Money Out': number;
+}[];
+
+export function MonthlyCashChart({ data }: { data: MonthlyChartData }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Monthly Cash Flow</CardTitle>
+        <CardDescription>Money In vs Money Out over the last 6 months (cash basis).</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} />
+            <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value)} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'hsl(var(--background))',
+                borderColor: 'hsl(var(--border))',
+                borderRadius: '0.5rem',
+              }}
+              formatter={(value: number) => formatCurrency(value)}
+            />
+            <Legend />
+            <Bar dataKey="Money In" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Money Out" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}

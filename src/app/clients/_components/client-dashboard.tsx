@@ -83,20 +83,30 @@ function flattenReportRows(rows: any[] | undefined): { name: string; value: stri
     for (const row of rowsArray) {
       if (!row) continue;
 
-      let name = '';
-      let value = '0';
-
       if (row.Header) {
-        name = row.Header.ColData?.[0]?.value.trim();
-        value = row.Summary?.ColData?.[1]?.value || '0';
-        flat.push({ name, value });
+        // This is a group row, e.g. "Income"
+        const headerName = row.Header.ColData?.[0]?.value?.trim() || '';
+        const summaryValue = row.Summary?.ColData?.[1]?.value || '0';
+        if (headerName) {
+            flat.push({ name: headerName, value: summaryValue });
+        }
+        
+        // The summary might have its own name, e.g. "Total Income". Let's add that too.
+        const summaryName = row.Summary?.ColData?.[0]?.value?.trim();
+        if (summaryName && summaryName !== headerName) {
+            flat.push({ name: summaryName, value: summaryValue });
+        }
+
         if (row.Rows?.Row) {
           flat = flat.concat(flattenReportRows(row.Rows.Row));
         }
       } else if (row.ColData) {
-        name = row.ColData?.[0]?.value.trim();
-        value = row.ColData?.[1]?.value || '0';
-        flat.push({ name, value });
+        // This is a simple data row.
+        const name = row.ColData?.[0]?.value?.trim() || '';
+        const value = row.ColData?.[1]?.value || '0';
+        if (name) {
+            flat.push({ name, value });
+        }
       }
     }
     return flat;

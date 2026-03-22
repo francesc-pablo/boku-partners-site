@@ -169,6 +169,10 @@ export function ClientDashboard() {
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [pnlRows, setPnlRows] = useState<{name: string; value: string}[]>([]);
+  const [balanceSheetRows, setBalanceSheetRows] = useState<{name: string; value: string}[]>([]);
+  const [cashFlowRows, setCashFlowRows] = useState<{name: string; value: string}[]>([]);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -184,6 +188,16 @@ export function ClientDashboard() {
         setData(dashboardData);
         const parsed = parseQuickBooksData(dashboardData);
         setParsedData(parsed);
+
+        if(dashboardData.pnl) {
+            setPnlRows(flattenReportRows(dashboardData.pnl.Rows?.Row));
+        }
+        if(dashboardData.balance) {
+            setBalanceSheetRows(flattenReportRows(dashboardData.balance.Rows?.Row));
+        }
+        if(dashboardData.cashflow) {
+            setCashFlowRows(flattenReportRows(dashboardData.cashflow.Rows?.Row));
+        }
 
       } catch (e: any) {
         setError(e.message);
@@ -424,6 +438,95 @@ export function ClientDashboard() {
             </CardContent>
         </Card>
       </div>
+
+       <div className="grid gap-4 lg:grid-cols-1 mt-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Profit &amp; Loss</CardTitle>
+                    <CardDescription>Detailed profit and loss statement.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loading ? (
+                        <Skeleton className="h-40 w-full" />
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Account</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {pnlRows.map((row, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell className="font-medium">{row.name}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(parseFloat(row.value) || 0)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2 mt-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Balance Sheet</CardTitle>
+                    <CardDescription>Detailed balance sheet statement.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loading ? (
+                        <Skeleton className="h-40 w-full" />
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Account</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {balanceSheetRows.map((row, index) => (
+                                     <TableRow key={index}>
+                                        <TableCell className="font-medium">{row.name}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(parseFloat(row.value) || 0)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Cash Flow</CardTitle>
+                    <CardDescription>Detailed cash flow statement.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     {loading ? (
+                        <Skeleton className="h-40 w-full" />
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Activity</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {cashFlowRows.map((row, index) => (
+                                     <TableRow key={index}>
+                                        <TableCell className="font-medium">{row.name}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(parseFloat(row.value) || 0)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
     </div>
   );
 }

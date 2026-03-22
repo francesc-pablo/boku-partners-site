@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { KpiCard } from './kpi-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BalanceSheetChart, PnlChart } from './dashboard-charts';
-import { DollarSign, TrendingUp, Wallet, Landmark, FileText } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, Landmark, FileText, Activity, Users } from 'lucide-react';
 import { format } from 'date-fns';
 
 // TYPES
@@ -16,6 +16,8 @@ type DashboardData = {
   cashflow: any;
   customers: any;
   invoices: any;
+  vendors: any;
+  bills: any;
 };
 
 type Customer = {
@@ -34,6 +36,23 @@ type Invoice = {
     Balance: number;
 };
 
+type Vendor = {
+  Id: string;
+  DisplayName: string;
+  PrimaryEmailAddr?: { Address: string };
+  Balance: number;
+};
+
+type Bill = {
+    Id: string;
+    DocNumber: string;
+    TxnDate: string;
+    VendorRef: { name: string };
+    TotalAmt: number;
+    Balance: number;
+};
+
+
 type ParsedData = {
     totalIncome: number;
     totalExpenses: number;
@@ -47,6 +66,7 @@ type ParsedData = {
     netCashFromOps: number;
     assetBreakdown: {name: string, value: number}[];
     totalOpenInvoices: number;
+    totalOpenBills: number;
 }
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -54,7 +74,7 @@ const formatDate = (dateString: string) => format(new Date(dateString), 'MMM d, 
 
 
 // PARSING HELPERS
-function flattenReportRows(rows: any[]): { name: string; value: string }[] {
+function flattenReportRows(rows: any[] | undefined): { name: string; value: string }[] {
     let flat: { name: string; value: string }[] = [];
     if (!rows) return flat;
 
@@ -83,11 +103,11 @@ function flattenReportRows(rows: any[]): { name: string; value: string }[] {
 }
 
 function parseQuickBooksData(data: DashboardData): ParsedData | null {
-    if (!data.pnl || !data.balance || !data.cashflow || !data.invoices) return null;
+    if (!data.pnl || !data.customers || !data.invoices) return null;
 
     const pnlRows = flattenReportRows(data.pnl.Rows?.Row);
-    const balanceRows = flattenReportRows(data.balance.Rows?.Row);
-    const cashflowRows = flattenReportRows(data.cashflow.Rows?.Row);
+    const balanceRows = flattenReportRows(data.balance?.Rows?.Row);
+    const cashflowRows = flattenReportRows(data.cashflow?.Rows?.Row);
 
     const getValue = (rows: {name: string, value: string}[], name: string) => {
         const row = rows.find(r => r.name === name);
@@ -115,13 +135,16 @@ function parseQuickBooksData(data: DashboardData): ParsedData | null {
         { name: 'Other Assets', value: getValue(balanceRows, 'Total Other Assets') },
     ].filter(asset => asset.value > 0);
 
-
     // Cash Flow
     const netCashFromOps = getValue(cashflowRows, 'Net Cash Provided by Operating Activities');
     
     // Invoices
     const invoices: Invoice[] = data.invoices?.QueryResponse?.Invoice || [];
     const totalOpenInvoices = invoices.reduce((acc, inv) => acc + inv.Balance, 0);
+
+    // Bills
+    const bills: Bill[] = data.bills?.QueryResponse?.Bill || [];
+    const totalOpenBills = bills.reduce((acc, bill) => acc + bill.Balance, 0);
 
     return {
         totalIncome,
@@ -135,7 +158,8 @@ function parseQuickBooksData(data: DashboardData): ParsedData | null {
         cash,
         netCashFromOps,
         assetBreakdown,
-        totalOpenInvoices
+        totalOpenInvoices,
+        totalOpenBills
     };
 }
 
@@ -178,17 +202,25 @@ export function ClientDashboard() {
 
   const customers: Customer[] = data?.customers?.QueryResponse?.Customer || [];
   const invoices: Invoice[] = data?.invoices?.QueryResponse?.Invoice || [];
+  const vendors: Vendor[] = data?.vendors?.QueryResponse?.Vendor || [];
+  const bills: Bill[] = data?.bills?.QueryResponse?.Bill || [];
+
 
   return (
     <div className="space-y-6">
        {error && <p className="text-destructive text-center p-4 bg-destructive/10 rounded-md">Error: {error}</p>}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard title="Total Revenue" value={loading ? '...' : formatCurrency(parsedData?.totalIncome || 0)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
-        <KpiCard title="Gross Profit" value={loading ? '...' : formatCurrency(parsedData?.grossProfit || 0)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
         <KpiCard title="Net Income" value={loading ? '...' : formatCurrency(parsedData?.netIncome || 0)} icon={<Wallet className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
+        <KpiCard title="Cash Flow (Ops)" value={loading ? '...' : formatCurrency(parsedData?.netCashFromOps || 0)} icon={<Activity className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
         <KpiCard title="Total Assets" value={loading ? '...' : formatCurrency(parsedData?.totalAssets || 0)} icon={<Landmark className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <KpiCard title="Gross Profit" value={loading ? '...' : formatCurrency(parsedData?.grossProfit || 0)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
         <KpiCard title="Open Invoices" value={loading ? '...' : formatCurrency(parsedData?.totalOpenInvoices || 0)} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
+        <KpiCard title="Open Bills" value={loading ? '...' : formatCurrency(parsedData?.totalOpenBills || 0)} icon={<FileText className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
+        <KpiCard title="Total Customers" value={loading ? '...' : customers.length.toString()} icon={<Users className="h-4 w-4 text-muted-foreground" />} isLoading={loading} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
@@ -252,7 +284,7 @@ export function ClientDashboard() {
         </Card>
         <Card>
             <CardHeader>
-                <CardTitle>Top Customers</CardTitle>
+                <CardTitle>Top Customers by Balance</CardTitle>
                 <CardDescription>Your customers with the highest open balance.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -272,7 +304,7 @@ export function ClientDashboard() {
                 </TableHeader>
                 <TableBody>
                     {customers.length > 0 ? (
-                    customers.sort((a,b) => b.Balance - a.Balance).slice(0, 5).map((customer) => (
+                    customers.filter(c => c.Balance > 0).sort((a,b) => b.Balance - a.Balance).slice(0, 5).map((customer) => (
                         <TableRow key={customer.Id}>
                         <TableCell className="font-medium">{customer.DisplayName}</TableCell>
                         <TableCell className="text-right">{formatCurrency(customer.Balance)}</TableCell>
@@ -288,9 +320,105 @@ export function ClientDashboard() {
                 </TableBody>
                 </Table>
                 )}
-                {customers.length > 5 && (
+                {customers.filter(c => c.Balance > 0).length > 5 && (
                     <p className="text-center text-sm text-muted-foreground mt-4">
-                        And {customers.length - 5} more...
+                        And {customers.filter(c => c.Balance > 0).length - 5} more...
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+            <CardHeader>
+                <CardTitle>Recent Bills</CardTitle>
+                <CardDescription>Your 5 most recent bills from QuickBooks.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                    <div className="space-y-2">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Bill #</TableHead>
+                                <TableHead>Vendor</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {bills.length > 0 ? (
+                                bills.slice(0, 5).map((bill) => (
+                                    <TableRow key={bill.Id}>
+                                        <TableCell className="font-medium">#{bill.DocNumber}</TableCell>
+                                        <TableCell>{bill.VendorRef.name}</TableCell>
+                                        <TableCell>{formatDate(bill.TxnDate)}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(bill.TotalAmt)}</TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24">
+                                        No bills found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                )}
+                 {bills.length > 5 && (
+                    <p className="text-center text-sm text-muted-foreground mt-4">
+                        And {bills.length - 5} more...
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Top Vendors by Balance</CardTitle>
+                <CardDescription>Your vendors with the highest open balance.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                ) : (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {vendors.length > 0 ? (
+                    vendors.filter(v => v.Balance > 0).sort((a,b) => b.Balance - a.Balance).slice(0, 5).map((vendor) => (
+                        <TableRow key={vendor.Id}>
+                        <TableCell className="font-medium">{vendor.DisplayName}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(vendor.Balance)}</TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={2} className="text-center h-24">
+                        No vendors found.
+                        </TableCell>
+                    </TableRow>
+                    )}
+                </TableBody>
+                </Table>
+                )}
+                {vendors.filter(v => v.Balance > 0).length > 5 && (
+                    <p className="text-center text-sm text-muted-foreground mt-4">
+                        And {vendors.filter(v => v.Balance > 0).length - 5} more...
                     </p>
                 )}
             </CardContent>

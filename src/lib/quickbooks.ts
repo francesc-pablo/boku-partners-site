@@ -74,3 +74,11 @@ export async function getCustomers() {
 export async function getInvoices() {
     return makeQBRequest({ endpoint: 'query?query=select * from Invoice' });
 }
+
+export async function getVendors() {
+    return makeQBRequest({ endpoint: 'query?query=select * from Vendor' });
+}
+
+export async function getBills() {
+    return makeQBRequest({ endpoint: 'query?query=select * from Bill' });
+}

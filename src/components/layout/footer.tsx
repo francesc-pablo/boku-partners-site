@@ -65,14 +65,6 @@ export function Footer() {
           </div>
           <div className="pl-4 md:pl-0">
             <div className="md:inline-block text-left">
-              <h3 className="font-headline font-semibold mb-4">Contact Info</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="text-muted-foreground">Email: info@bokupartners.com</li>
-              </ul>
-            </div>
-          </div>
-          <div className="pl-4 md:pl-0">
-            <div className="md:inline-block text-left">
               <h3 className="font-headline font-semibold mb-4">Legal</h3>
               <ul className="space-y-2 text-sm">
                 <li>
@@ -85,6 +77,14 @@ export function Footer() {
                     Privacy Policy
                   </Link>
                 </li>
+              </ul>
+            </div>
+          </div>
+          <div className="pl-4 md:pl-0">
+            <div className="md:inline-block text-left">
+              <h3 className="font-headline font-semibold mb-4">Contact Info</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="text-muted-foreground">Email: info@bokupartners.com</li>
               </ul>
             </div>
           </div>

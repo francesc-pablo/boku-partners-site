@@ -4,7 +4,7 @@ import axios from 'axios';
 import { cookies } from 'next/headers';
 import { subMonths, startOfMonth, endOfMonth, format } from 'date-fns';
 
-const QB_API_BASE_URL = 'https://sandbox-quickbooks.api.intuit.com/v3/company';
+const QB_API_BASE_URL = 'https://quickbooks.api.intuit.com/v3/company';
 
 async function makeQBRequest({
   endpoint,

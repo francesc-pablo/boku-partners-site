@@ -1,32 +1,99 @@
 'use client';
 
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ClientDashboard } from './_components/client-dashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ClientsPage() {
-  const [accessToken, setAccessToken] = useState<string | undefined>(undefined);
-  const [redirectUri, setRedirectUri] = useState('');
+  const { user, loading: authLoading } = useAuth();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
-  // This effect runs on the client to get cookie and dynamic host
   useEffect(() => {
-    // Manually get cookie on client-side
-    const getCookie = (name: string) => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop()?.split(';').shift();
-    };
-    setAccessToken(getCookie('qb_access_token'));
-
-    // Dynamically determine the redirect URI
-    if (typeof window !== 'undefined') {
-      const host = window.location.host;
-      const protocol = window.location.protocol;
-      setRedirectUri(`${protocol}//${host}/api/auth/callback`);
+    if (authLoading) return;
+    if (!user) {
+        setLoading(false);
+        // User not logged in, they will be redirected by useAuth or see login prompts elsewhere.
+        // For this page, we just stop loading.
+        return;
     }
-  }, []);
+
+    async function fetchDashboardData() {
+      try {
+        setLoading(true);
+        setError(null);
+        const idToken = await user.getIdToken();
+        const res = await fetch('/api/quickbooks/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${idToken}`,
+          },
+        });
+
+        if (res.status === 404) {
+          // This status code now indicates that QB is not connected for this user
+          setData(null);
+          return;
+        }
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to fetch dashboard data.');
+        }
+
+        const dashboardData = await res.json();
+        setData(dashboardData);
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+  }, [user, authLoading]);
+
+  const handleConnect = async () => {
+    if (!user) {
+        setError("You must be logged in to connect to QuickBooks.");
+        return;
+    }
+    setIsConnecting(true);
+    try {
+        const idToken = await user.getIdToken();
+        const res = await fetch('/api/auth/connect', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${idToken}`,
+            },
+        });
+        if (!res.ok) {
+            throw new Error('Failed to get QuickBooks connection URL.');
+        }
+        const { url } = await res.json();
+        window.location.href = url;
+    } catch (e: any) {
+        setError(e.message);
+        setIsConnecting(false);
+    }
+  };
+  
+  const PageSkeleton = () => (
+    <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+        </div>
+        <Skeleton className="h-96" />
+    </div>
+  )
 
   return (
     <>
@@ -40,10 +107,22 @@ export default function ClientsPage() {
       </section>
 
       <section className="container mx-auto">
-        {accessToken ? (
-          <ClientDashboard />
+        {loading || authLoading ? (
+            <PageSkeleton />
+        ) : !user ? (
+            <Card className="max-w-md mx-auto w-full">
+                <CardHeader className="text-center">
+                <CardTitle>Please Log In</CardTitle>
+                <CardDescription>
+                    You need to be logged in to view your dashboard.
+                </CardDescription>
+                </CardHeader>
+            </Card>
+        ) : data ? (
+          <ClientDashboard data={data} />
         ) : (
           <div className="flex flex-col items-center gap-8">
+            {error && <p className="text-destructive text-center">{error}</p>}
             <Card className="max-w-md mx-auto w-full">
                 <CardHeader className="text-center">
                 <CardTitle>Connect to QuickBooks</CardTitle>
@@ -52,29 +131,21 @@ export default function ClientsPage() {
                 </CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-center">
-                <Button asChild>
-                    <Link href="/api/auth/connect">Connect to QuickBooks</Link>
+                <Button onClick={handleConnect} disabled={isConnecting}>
+                    {isConnecting ? 'Connecting...' : 'Connect to QuickBooks'}
                 </Button>
                 </CardContent>
             </Card>
-            {redirectUri && (
-                 <Card className="max-w-2xl mx-auto w-full bg-secondary">
-                    <CardHeader>
-                        <CardTitle className="text-xl">Setup Instructions for Developers</CardTitle>
-                        <CardDescription>
-                            To complete the connection, add the following URL to your Intuit Developer App's "Redirect URIs" list.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="bg-background p-4 rounded-md">
-                            <p className="font-mono text-sm break-all select-all">{redirectUri}</p>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-4">
-                           The URI above is dynamically generated for your current development environment. For your live site, you will need to add your production redirect URI to your Intuit app settings as well.
-                        </p>
-                    </CardContent>
-                </Card>
-            )}
+            <Alert className="max-w-2xl mx-auto w-full">
+                <AlertTitle className="text-xl">Setup Instructions for Developers</AlertTitle>
+                <AlertDescription>
+                    To complete the connection, add the following URL to your Intuit Developer App's "Redirect URIs" list and to your `.env.local` file under `QB_REDIRECT_URI`.
+                    <div className="bg-background p-4 rounded-md my-4">
+                        <p className="font-mono text-sm break-all select-all">http://localhost:9002/api/auth/callback</p>
+                    </div>
+                    For production, you must replace `http://localhost:9002` with your actual domain.
+                </AlertDescription>
+            </Alert>
           </div>
         )}
       </section>

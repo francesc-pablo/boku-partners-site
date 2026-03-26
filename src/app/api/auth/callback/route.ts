@@ -1,3 +1,5 @@
+'use server';
+
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import axios from 'axios';
@@ -44,9 +46,10 @@ export async function GET(req: Request) {
     const { access_token, refresh_token, expires_in } = tokenResponse.data;
     const expiresAt = Date.now() + expires_in * 1000;
 
-    const cookieOptions = {
+    const cookieOptions: Parameters<typeof cookies.set>[2] = {
         httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',
+        secure: true,
+        sameSite: 'lax',
         path: '/',
         maxAge: 100 * 24 * 60 * 60, // ~100 days, aligns with refresh token expiry
     };

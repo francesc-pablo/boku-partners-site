@@ -1,3 +1,5 @@
+'use server';
+
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
@@ -7,7 +9,8 @@ export async function GET() {
   const state = crypto.randomBytes(16).toString('hex');
   cookies().set('qb_oauth_state', state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV !== 'development',
+    secure: true,
+    sameSite: 'lax',
     maxAge: 60 * 15, // 15 minutes
     path: '/',
   });

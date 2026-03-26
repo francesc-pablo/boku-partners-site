@@ -1,4 +1,4 @@
-'use server';
+
 
 function flattenReportRows(rows: any[] | undefined): { name: string; value: string }[] {
     let flat: { name: string; value: string }[] = [];
@@ -47,7 +47,7 @@ const getValue = (rows: {name: string, value: string}[], name: string) => {
 }
 
 
-export async function parseQuickBooksData(data: any) {
+export function parseQuickBooksData(data: any) {
     if (!data.pnl || !data.customers || !data.invoices) return null;
 
     const pnlRows = flattenReportRows(data.pnl.Rows?.Row);

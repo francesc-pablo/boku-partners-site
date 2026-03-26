@@ -10,7 +10,7 @@ export async function GET() {
   cookies().set('qb_oauth_state', state, {
     httpOnly: true,
     secure: true,
-    sameSite: 'lax',
+    sameSite: 'none',
     maxAge: 60 * 15, // 15 minutes
     path: '/',
   });

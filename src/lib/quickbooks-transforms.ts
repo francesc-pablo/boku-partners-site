@@ -47,7 +47,7 @@ const getValue = (rows: {name: string, value: string}[], name: string) => {
 }
 
 
-export function parseQuickBooksData(data: any) {
+export async function parseQuickBooksData(data: any) {
     if (!data.pnl || !data.customers || !data.invoices) return null;
 
     const pnlRows = flattenReportRows(data.pnl.Rows?.Row);

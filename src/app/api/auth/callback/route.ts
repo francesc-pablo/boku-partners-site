@@ -1,8 +1,6 @@
-'use server';
-
-import axios from 'axios';
 import { NextResponse } from 'next/server';
-import { saveQuickbooksConnection } from '@/lib/quickbooks-auth';
+import { cookies } from 'next/headers';
+import axios from 'axios';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -10,21 +8,25 @@ export async function GET(req: Request) {
   const realmId = searchParams.get('realmId');
   const state = searchParams.get('state');
 
-  if (!code || !realmId || !state) {
-    return NextResponse.json({ error: 'Missing code, realmId, or state' }, { status: 400 });
+  const savedState = cookies().get('qb_oauth_state')?.value;
+  
+  if (!state || !savedState || state !== savedState) {
+    return NextResponse.json({ error: 'Invalid state parameter. Authentication failed.' }, { status: 401 });
+  }
+
+  // Clear the state cookie now that it has been used
+  cookies().delete('qb_oauth_state');
+
+  if (!code || !realmId) {
+    return NextResponse.json({ error: 'Authorization denied or missing required parameters.' }, { status: 400 });
   }
 
   try {
-    const { userId } = JSON.parse(Buffer.from(state, 'base64').toString('ascii'));
-    if (!userId) {
-      throw new Error('Invalid state: userId missing');
-    }
-
     const tokenResponse = await axios.post(
       'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
       new URLSearchParams({
         grant_type: 'authorization_code',
-        code: code!,
+        code,
         redirect_uri: process.env.QB_REDIRECT_URI!,
       }),
       {
@@ -40,15 +42,22 @@ export async function GET(req: Request) {
     );
 
     const { access_token, refresh_token, expires_in } = tokenResponse.data;
+    const expiresAt = Date.now() + expires_in * 1000;
 
-    await saveQuickbooksConnection({
-      userId,
-      realmId,
-      accessToken: access_token,
-      refreshToken: refresh_token,
-      expiresAt: Date.now() + expires_in * 1000,
-    });
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        path: '/',
+        maxAge: 100 * 24 * 60 * 60, // ~100 days, aligns with refresh token expiry
+    };
+
+    // Set tokens in secure, httpOnly cookies
+    cookies().set('qb_access_token', access_token, { ...cookieOptions, maxAge: expires_in });
+    cookies().set('qb_refresh_token', refresh_token, cookieOptions);
+    cookies().set('qb_realm_id', realmId, cookieOptions);
+    cookies().set('qb_expires_at', expiresAt.toString(), cookieOptions);
     
+    // Redirect to the dashboard
     const url = new URL('/clients', req.url);
     return NextResponse.redirect(url);
 

@@ -14,8 +14,8 @@ export async function GET(req: Request) {
   
   if (!state || !savedState || state !== savedState) {
     console.error('State mismatch during QuickBooks OAuth callback.');
-    console.error(`Received state: ${state}`);
-    console.error(`Saved state (from cookie): ${savedState}`);
+    console.error(`Received state from URL: ${state}`);
+    console.error(`Expected state from cookie: ${savedState}`);
     return NextResponse.json({ error: 'Invalid state parameter. Authentication failed. Please try connecting again.' }, { status: 401 });
   }
 
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
     const cookieOptions: Parameters<typeof cookies.set>[2] = {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: 'lax', // Use 'lax' for top-level navigation redirects
         path: '/',
         maxAge: 100 * 24 * 60 * 60, // ~100 days, aligns with refresh token expiry
     };

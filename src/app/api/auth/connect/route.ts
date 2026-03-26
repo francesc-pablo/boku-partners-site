@@ -7,10 +7,13 @@ import crypto from 'crypto';
 export async function GET() {
   // Create a CSRF token to prevent cross-site request forgery attacks
   const state = crypto.randomBytes(16).toString('hex');
+  
+  console.log('Generated state for QB OAuth:', state);
+
   cookies().set('qb_oauth_state', state, {
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: 'lax', // Use 'lax' for top-level navigation redirects
     maxAge: 60 * 15, // 15 minutes
     path: '/',
   });

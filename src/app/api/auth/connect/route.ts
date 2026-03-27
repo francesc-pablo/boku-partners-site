@@ -12,7 +12,6 @@ export async function GET() {
 
   cookies().set('qb_oauth_state', state, {
     httpOnly: true,
-    secure: true,
     sameSite: 'lax', // Use 'lax' for top-level navigation redirects
     maxAge: 60 * 15, // 15 minutes
     path: '/',

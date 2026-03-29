@@ -13,19 +13,27 @@ export default function ClientsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Handle errors from the OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const qbError = urlParams.get('error');
+    const qbErrorDetails = urlParams.get('details');
+    if (qbError) {
+      setError(`QuickBooks Connection Failed: ${qbError}. ${qbErrorDetails || 'Please check the developer console for logs and try again.'}`);
+      // Clear the error from the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     async function fetchDashboardData() {
       try {
         setLoading(true);
-        setError(null);
-        // The API route uses secure cookies, so no token is needed here.
+        // Do not set error here, so the OAuth error remains visible
+        // setError(null);
         const res = await fetch('/api/quickbooks/dashboard');
 
         if (res.status === 404) {
-          // 404 indicates that QB is not connected or the token refresh failed.
           setData(null);
-          // Check for a specific error message from the server
           const errorData = await res.json().catch(() => null);
-          if (errorData && errorData.error) {
+          if (errorData && errorData.error && !qbError) { // Don't overwrite the more specific OAuth error
               setError(errorData.error)
           }
           return;
@@ -39,7 +47,9 @@ export default function ClientsPage() {
         const dashboardData = await res.json();
         setData(dashboardData);
       } catch (e: any) {
-        setError(e.message);
+        if (!qbError) { // Don't overwrite the more specific OAuth error
+            setError(e.message);
+        }
       } finally {
         setLoading(false);
       }

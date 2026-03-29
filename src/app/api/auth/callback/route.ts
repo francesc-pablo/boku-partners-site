@@ -3,56 +3,46 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import axios from 'axios';
-import crypto from 'crypto';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const realmId = searchParams.get('realmId');
-  const state = searchParams.get('state');
+  const returnedState = searchParams.get('state');
+  
+  const cookieStore = cookies();
+  const storedState = cookieStore.get('qb_oauth_state')?.value;
 
-  // Verify the stateless CSRF token
-  if (!process.env.CSRF_SECRET) {
-    throw new Error('CSRF_SECRET environment variable is not set.');
-  }
+  // It's crucial to delete the state cookie after using it for security.
+  cookieStore.delete('qb_oauth_state');
 
-  if (!state || !state.includes('.')) {
-    const errorUrl = new URL('/clients', req.url);
+  const errorUrl = new URL('/clients', req.url);
+
+  if (!returnedState || !storedState) {
     errorUrl.searchParams.set('error', 'invalid_state');
-    errorUrl.searchParams.set('details', 'State parameter is missing or malformed.');
+    errorUrl.searchParams.set('details', 'State parameter is missing from request or cookie. Please try again.');
     return NextResponse.redirect(errorUrl);
   }
 
-  const [nonce, signature] = state.split('.');
-  const secret = process.env.CSRF_SECRET;
-
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(nonce)
-    .digest('hex');
-
-  // Use timing-safe comparison to prevent timing attacks
-  try {
-    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-      const errorUrl = new URL('/clients', req.url);
-      errorUrl.searchParams.set('error', 'invalid_state');
-      errorUrl.searchParams.set('details', 'State signature mismatch.');
-      return NextResponse.redirect(errorUrl);
-    }
-  } catch (e) {
-      const errorUrl = new URL('/clients', req.url);
-      errorUrl.searchParams.set('error', 'invalid_state');
-      errorUrl.searchParams.set('details', 'Invalid state signature format.');
-      return NextResponse.redirect(errorUrl);
+  // Compare the state returned from QuickBooks with the one stored in the cookie.
+  if (decodeURIComponent(returnedState) !== storedState) {
+    console.error("CSRF Warning: State parameter mismatch.", {
+      returned: decodeURIComponent(returnedState),
+      stored: storedState,
+    });
+    errorUrl.searchParams.set('error', 'invalid_state');
+    errorUrl.searchParams.set('details', 'State parameter mismatch. Please try connecting again.');
+    return NextResponse.redirect(errorUrl);
   }
   
   if (!code || !realmId) {
-    const errorUrl = new URL('/clients', req.url);
     errorUrl.searchParams.set('error', 'missing_params');
+    errorUrl.searchParams.set('details', 'The connection was incomplete. Missing code or realmId from QuickBooks.');
     return NextResponse.redirect(errorUrl);
   }
 
   try {
+    // Exchange the authorization code for access and refresh tokens
     const tokenResponse = await axios.post(
       'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
       new URLSearchParams({
@@ -84,12 +74,12 @@ export async function GET(req: Request) {
     };
 
     // Set tokens in secure cookies
-    cookies().set('qb_access_token', access_token, { ...cookieOptions, maxAge: expires_in });
-    cookies().set('qb_refresh_token', refresh_token, cookieOptions);
-    cookies().set('qb_realm_id', realmId, cookieOptions);
-    cookies().set('qb_expires_at', expiresAt.toString(), cookieOptions);
+    cookieStore.set('qb_access_token', access_token, { ...cookieOptions, maxAge: expires_in });
+    cookieStore.set('qb_refresh_token', refresh_token, cookieOptions);
+    cookieStore.set('qb_realm_id', realmId, cookieOptions);
+    cookieStore.set('qb_expires_at', expiresAt.toString(), cookieOptions);
     
-    // Redirect to the dashboard
+    // Redirect to the dashboard on success
     const url = new URL('/clients', req.url);
     return NextResponse.redirect(url);
 

@@ -4,20 +4,10 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 export async function GET() {
-  if (!process.env.CSRF_SECRET) {
-    throw new Error('CSRF_SECRET environment variable is not set.');
-  }
-
-  // Create a stateless CSRF token by signing a nonce
-  const nonce = crypto.randomBytes(16).toString('hex');
-  const secret = process.env.CSRF_SECRET;
-
-  const signature = crypto
-    .createHmac('sha256', secret)
-    .update(nonce)
-    .digest('hex');
-  
-  const state = `${nonce}.${signature}`;
+  // A random nonce for CSRF protection.
+  const state = JSON.stringify({
+    nonce: crypto.randomUUID(),
+  });
 
   const authUrl =
     `https://appcenter.intuit.com/connect/oauth2` +
@@ -25,7 +15,17 @@ export async function GET() {
     `&redirect_uri=${encodeURIComponent(process.env.QB_REDIRECT_URI!)}` +
     `&response_type=code` +
     `&scope=com.intuit.quickbooks.accounting` +
-    `&state=${state}`;
+    `&state=${encodeURIComponent(state)}`;
 
-  return NextResponse.redirect(new URL(authUrl));
+  const response = NextResponse.redirect(new URL(authUrl));
+
+  // Store state in a secure, http-only cookie to be verified in the callback
+  response.cookies.set('qb_oauth_state', state, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
+  });
+
+  return response;
 }

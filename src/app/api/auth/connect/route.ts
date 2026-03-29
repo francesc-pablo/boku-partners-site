@@ -11,8 +11,8 @@ export async function GET() {
   console.log('Generated state for QB OAuth:', state);
 
   cookies().set('qb_oauth_state', state, {
-    httpOnly: true,
-    secure: true,
+    // httpOnly: true, // Temporarily removed for debugging
+    // secure: true,   // Temporarily removed for debugging
     sameSite: 'lax',
     maxAge: 60 * 15, // 15 minutes
     path: '/',

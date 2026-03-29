@@ -3,24 +3,49 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import axios from 'axios';
+import crypto from 'crypto';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const realmId = searchParams.get('realmId');
   const state = searchParams.get('state');
-  const savedState = cookies().get('qb_oauth_state')?.value;
-  
-  if (!state || state !== savedState) {
+
+  // Verify the stateless CSRF token
+  if (!process.env.CSRF_SECRET) {
+    throw new Error('CSRF_SECRET environment variable is not set.');
+  }
+
+  if (!state || !state.includes('.')) {
     const errorUrl = new URL('/clients', req.url);
     errorUrl.searchParams.set('error', 'invalid_state');
-    errorUrl.searchParams.set('details', 'State parameter mismatch. Please try connecting again.');
+    errorUrl.searchParams.set('details', 'State parameter is missing or malformed.');
     return NextResponse.redirect(errorUrl);
   }
 
-  // Clear the state cookie now that it has been used
-  cookies().delete('qb_oauth_state');
+  const [nonce, signature] = state.split('.');
+  const secret = process.env.CSRF_SECRET;
 
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(nonce)
+    .digest('hex');
+
+  // Use timing-safe comparison to prevent timing attacks
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+      const errorUrl = new URL('/clients', req.url);
+      errorUrl.searchParams.set('error', 'invalid_state');
+      errorUrl.searchParams.set('details', 'State signature mismatch.');
+      return NextResponse.redirect(errorUrl);
+    }
+  } catch (e) {
+      const errorUrl = new URL('/clients', req.url);
+      errorUrl.searchParams.set('error', 'invalid_state');
+      errorUrl.searchParams.set('details', 'Invalid state signature format.');
+      return NextResponse.redirect(errorUrl);
+  }
+  
   if (!code || !realmId) {
     const errorUrl = new URL('/clients', req.url);
     errorUrl.searchParams.set('error', 'missing_params');

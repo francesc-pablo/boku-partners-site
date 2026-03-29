@@ -1,20 +1,23 @@
 'use server';
 
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import crypto from 'crypto';
 
 export async function GET() {
-  // Create a CSRF token to prevent cross-site request forgery attacks
-  const state = crypto.randomBytes(16).toString('hex');
+  if (!process.env.CSRF_SECRET) {
+    throw new Error('CSRF_SECRET environment variable is not set.');
+  }
+
+  // Create a stateless CSRF token by signing a nonce
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const secret = process.env.CSRF_SECRET;
+
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(nonce)
+    .digest('hex');
   
-  cookies().set('qb_oauth_state', state, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 60 * 15, // 15 minutes
-    path: '/',
-  });
+  const state = `${nonce}.${signature}`;
 
   const authUrl =
     `https://appcenter.intuit.com/connect/oauth2` +

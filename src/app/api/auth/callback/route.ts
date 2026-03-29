@@ -50,14 +50,13 @@ export async function GET(req: Request) {
     const expiresAt = Date.now() + expires_in * 1000;
 
     const cookieOptions: Parameters<typeof cookies.set>[2] = {
-        httpOnly: true,
         secure: true,
         sameSite: 'lax', // Use 'lax' for top-level navigation redirects
         path: '/',
         maxAge: 100 * 24 * 60 * 60, // ~100 days, aligns with refresh token expiry
     };
 
-    // Set tokens in secure, httpOnly cookies
+    // Set tokens in secure cookies
     cookies().set('qb_access_token', access_token, { ...cookieOptions, maxAge: expires_in });
     cookies().set('qb_refresh_token', refresh_token, cookieOptions);
     cookies().set('qb_realm_id', realmId, cookieOptions);

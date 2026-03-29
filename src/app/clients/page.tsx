@@ -18,7 +18,7 @@ export default function ClientsPage() {
     const qbError = urlParams.get('error');
     const qbErrorDetails = urlParams.get('details');
     if (qbError) {
-      setError(`QuickBooks Connection Failed: ${qbError}. ${qbErrorDetails || 'Please check the developer console for logs and try again.'}`);
+      setError(`QuickBooks Connection Failed: ${qbError}. ${qbErrorDetails || 'Please try connecting again.'}`);
       // Clear the error from the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }

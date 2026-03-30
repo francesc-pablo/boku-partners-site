@@ -1,9 +1,11 @@
+'use server';
+
 import { NextResponse } from 'next/server';
 import { getValidAccessToken } from '@/lib/quickbooks-auth';
 import { getDashboardData } from '@/lib/quickbooks-service';
 import { parseQuickBooksData } from '@/lib/quickbooks-transforms';
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const { accessToken, realmId } = await getValidAccessToken();
     const rawData = await getDashboardData({ token: accessToken, realmId });
@@ -18,10 +20,11 @@ export async function GET(req: Request) {
 
   } catch (error: any) {
     console.error('[QB Dashboard API Error]', error.message);
-    // If the error indicates a connection issue, send a specific status
-    if (error.message.includes('QuickBooks not connected') || error.message.includes('Failed to refresh token')) {
+    
+    if (error.message.includes('QuickBooks not connected') || error.message.includes('Failed to refresh QuickBooks token')) {
         return NextResponse.json({ error: error.message }, { status: 404 });
     }
-    return NextResponse.json({ error: 'An internal server error occurred.' }, { status: 500 });
+    
+    return NextResponse.json({ error: 'An internal server error occurred while fetching dashboard data.' }, { status: 500 });
   }
 }

@@ -25,20 +25,19 @@ export async function getDashboardData({
         reportPromises.push(qbApiRequest({ token, realmId, endpoint }).then(data => ({ data, monthName })));
     }
     
-    // Use Promise.allSettled to ensure individual month failures don't block the whole dashboard
     const results = await Promise.allSettled(reportPromises);
     return results.map(res => res.status === 'fulfilled' ? res.value : { error: true, monthName: 'N/A', data: null });
   }
 
   const [pnlRes, balanceRes, cashflowRes, customersRes, invoicesRes, vendorsRes, billsRes, monthlyPnlRes] =
     await Promise.allSettled([
-      qbApiRequest({ token, realmId, endpoint: 'reports/ProfitAndLoss' }),
+      qbApiRequest({ token, realmId, endpoint: 'reports/ProfitAndLoss?accounting_method=Cash' }),
       qbApiRequest({ token, realmId, endpoint: 'reports/BalanceSheet' }),
-      qbApiRequest({ token, realmId, endpoint: 'reports/CashFlow' }),
-      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Customer' }),
-      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Invoice' }),
-      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Vendor' }),
-      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Bill' }),
+      qbApiRequest({ token, realmId, endpoint: 'reports/CashFlow?accounting_method=Cash' }),
+      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Customer MAXRESULTS 1000' }),
+      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Invoice ORDER BY TxnDate DESC MAXRESULTS 100' }),
+      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Vendor MAXRESULTS 1000' }),
+      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Bill ORDER BY TxnDate DESC MAXRESULTS 100' }),
       getMonthlyPnl(6)
     ]);
   

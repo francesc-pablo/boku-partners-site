@@ -1,4 +1,4 @@
-
+'use server';
 
 function flattenReportRows(rows: any[] | undefined): { name: string; value: string }[] {
     let flat: { name: string; value: string }[] = [];
@@ -10,7 +10,6 @@ function flattenReportRows(rows: any[] | undefined): { name: string; value: stri
       if (!row) continue;
 
       if (row.Header) {
-        // This is a group row, e.g. "Income"
         const headerName = row.Header.ColData?.[0]?.value?.trim() || '';
         const summaryValue = row.Summary?.ColData?.[1]?.value || '0';
         if (headerName) {
@@ -26,7 +25,6 @@ function flattenReportRows(rows: any[] | undefined): { name: string; value: stri
           flat = flat.concat(flattenReportRows(row.Rows.Row));
         }
       } else if (row.ColData) {
-        // This is a simple data row.
         const name = row.ColData?.[0]?.value?.trim() || '';
         const value = row.ColData?.[1]?.value || '0';
         if (name) {
@@ -46,13 +44,14 @@ const getValue = (rows: {name: string, value: string}[], name: string) => {
     return parseFloat(rawValue);
 }
 
-
 export function parseQuickBooksData(data: any) {
-    if (!data.pnl || !data.customers || !data.invoices) return null;
+    if (!data.pnl || !data.balance || !data.cashflow || !data.customers || !data.invoices || !data.vendors || !data.bills || !data.monthlyPnl) {
+        return null;
+    }
 
     const pnlRows = flattenReportRows(data.pnl.Rows?.Row);
-    const balanceRows = flattenReportRows(data.balance?.Rows?.Row);
-    const cashflowRows = flattenReportRows(data.cashflow?.Rows?.Row);
+    const balanceRows = flattenReportRows(data.balance.Rows?.Row);
+    const cashflowRows = flattenReportRows(data.cashflow.Rows?.Row);
 
     // P&L
     const totalIncome = getValue(pnlRows, 'Total Income');
@@ -91,13 +90,13 @@ export function parseQuickBooksData(data: any) {
         if (report.error || !report.data) {
             return { name: report.monthName, 'Money In': 0, 'Money Out': 0 };
         }
-        const pnlRows = flattenReportRows(report.data.Rows?.Row);
-        const totalIncome = getValue(pnlRows, 'Total Income');
-        const totalExpenses = getValue(pnlRows, 'Total Expenses');
+        const monthlyPnlRows = flattenReportRows(report.data.Rows?.Row);
+        const monthlyTotalIncome = getValue(monthlyPnlRows, 'Total Income');
+        const monthlyTotalExpenses = getValue(monthlyPnlRows, 'Total Expenses');
         return {
             name: report.monthName,
-            'Money In': totalIncome,
-            'Money Out': totalExpenses,
+            'Money In': monthlyTotalIncome,
+            'Money Out': monthlyTotalExpenses,
         };
     });
 
@@ -116,7 +115,6 @@ export function parseQuickBooksData(data: any) {
             currentAssets,
             cash,
             netCashFromOps,
-            assetBreakdown,
             totalOpenInvoices,
             totalOpenBills,
             totalCustomers: customers.length,

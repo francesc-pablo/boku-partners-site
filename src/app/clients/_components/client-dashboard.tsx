@@ -1,14 +1,12 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { KpiCard } from './kpi-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BalanceSheetChart, PnlChart, MonthlyCashChart } from './dashboard-charts';
 import { DollarSign, TrendingUp, Wallet, Landmark, FileText, Activity, Users } from 'lucide-react';
 import { format } from 'date-fns';
 
-// TYPES
 type DashboardData = {
   kpis: any;
   reports: any;
@@ -92,7 +90,7 @@ export function ClientDashboard({ data }: { data: DashboardData }) {
         <Card>
             <CardHeader>
                 <CardTitle>Recent Invoices</CardTitle>
-                <CardDescription>Your 5 most recent invoices from QuickBooks.</CardDescription>
+                <CardDescription>Your 5 most recent invoices.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -154,7 +152,7 @@ export function ClientDashboard({ data }: { data: DashboardData }) {
                         ) : (
                         <TableRow>
                             <TableCell colSpan={2} className="text-center h-24">
-                            No customers found.
+                            No customers with an open balance.
                             </TableCell>
                         </TableRow>
                         )}
@@ -172,7 +170,7 @@ export function ClientDashboard({ data }: { data: DashboardData }) {
         <Card>
             <CardHeader>
                 <CardTitle>Recent Bills</CardTitle>
-                <CardDescription>Your 5 most recent bills from QuickBooks.</CardDescription>
+                <CardDescription>Your 5 most recent bills.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -234,7 +232,7 @@ export function ClientDashboard({ data }: { data: DashboardData }) {
                     ) : (
                     <TableRow>
                         <TableCell colSpan={2} className="text-center h-24">
-                        No vendors found.
+                        No vendors with an open balance.
                         </TableCell>
                     </TableRow>
                     )}
@@ -252,8 +250,8 @@ export function ClientDashboard({ data }: { data: DashboardData }) {
        <div className="grid gap-4 lg:grid-cols-1 mt-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>Profit &amp; Loss</CardTitle>
-                    <CardDescription>Detailed profit and loss statement.</CardDescription>
+                    <CardTitle>Profit & Loss Details</CardTitle>
+                    <CardDescription>A detailed breakdown of your profit and loss statement.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -278,8 +276,8 @@ export function ClientDashboard({ data }: { data: DashboardData }) {
         <div className="grid gap-4 lg:grid-cols-2 mt-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>Balance Sheet</CardTitle>
-                    <CardDescription>Detailed balance sheet statement.</CardDescription>
+                    <CardTitle>Balance Sheet Details</CardTitle>
+                    <CardDescription>A detailed breakdown of your balance sheet.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -302,8 +300,8 @@ export function ClientDashboard({ data }: { data: DashboardData }) {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Cash Flow</CardTitle>
-                    <CardDescription>Detailed cash flow statement.</CardDescription>
+                    <CardTitle>Cash Flow Details</CardTitle>
+                    <CardDescription>A detailed breakdown of your cash flow statement.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <Table>

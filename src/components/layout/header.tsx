@@ -12,7 +12,7 @@ const navLinks = [
   { href: '/services', label: 'Services' },
   { href: '/industry-focus', label: 'Industry Focus' },
   { href: '/contact', label: 'Contact' },
-  { href: '/clients', label: 'Client' },
+  { href: '/clients', label: 'Client Portal' },
 ];
 
 export function Header() {

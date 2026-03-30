@@ -17,7 +17,7 @@ export async function qbApiRequest({
   method?: 'GET' | 'POST';
   body?: any;
 }) {
-  const url = `${QB_BASE_URL}/v3/company/${realmId}/${endpoint}${endpoint.includes('?') ? '&' : '?'}minorversion=65`;
+  const url = `${QB_BASE_URL}/v3/company/${realmId}/${endpoint}${endpoint.includes('?') ? '&' : '?'}minorversion=70`;
 
   try {
     const response = await axios({
@@ -34,10 +34,8 @@ export async function qbApiRequest({
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       console.error('QuickBooks API Request Error:', JSON.stringify(error.response.data, null, 2));
-      // Re-throw a more specific error to be handled by the caller
       throw new Error(`QuickBooks API Error: ${error.response.status} ${JSON.stringify(error.response.data)}`);
     }
-    // Re-throw generic errors
     throw error;
   }
 }

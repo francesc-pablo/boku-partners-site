@@ -6,14 +6,13 @@ import { useState } from 'react';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 
-// P&L Chart
-type PnlChartData = {
+type ChartData = {
   name: string;
-  'Income': number;
-  'Expenses': number;
-}[];
+  [key: string]: number | string;
+};
 
-export function PnlChart({ data }: { data: PnlChartData }) {
+// P&L Chart
+export function PnlChart({ data }: { data: ChartData[] }) {
   return (
     <Card>
       <CardHeader>
@@ -25,7 +24,7 @@ export function PnlChart({ data }: { data: PnlChartData }) {
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value)} />
+            <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value as number)} />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'hsl(var(--background))',
@@ -34,7 +33,7 @@ export function PnlChart({ data }: { data: PnlChartData }) {
               }}
               formatter={(value: number) => formatCurrency(value)}
             />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: "0.8rem" }} />
             <Bar dataKey="Income" fill="hsl(var(--chart-1))" name="Total Income" radius={[4, 4, 0, 0]} />
             <Bar dataKey="Expenses" fill="hsl(var(--chart-2))" name="Total Expenses" radius={[4, 4, 0, 0]} />
           </BarChart>
@@ -105,7 +104,7 @@ export function BalanceSheetChart({ data }: { data: AssetData[] }) {
         setActiveIndex(index);
     };
     
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
         return (
             <Card>
                 <CardHeader>
@@ -155,15 +154,8 @@ export function BalanceSheetChart({ data }: { data: AssetData[] }) {
     );
 }
 
-
 // Monthly Cash Flow Chart
-type MonthlyChartData = {
-  name: string;
-  'Money In': number;
-  'Money Out': number;
-}[];
-
-export function MonthlyCashChart({ data }: { data: MonthlyChartData }) {
+export function MonthlyCashChart({ data }: { data: ChartData[] }) {
   return (
     <Card>
       <CardHeader>
@@ -175,7 +167,7 @@ export function MonthlyCashChart({ data }: { data: MonthlyChartData }) {
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value)} />
+            <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value as number)} />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'hsl(var(--background))',
@@ -184,7 +176,7 @@ export function MonthlyCashChart({ data }: { data: MonthlyChartData }) {
               }}
               formatter={(value: number) => formatCurrency(value)}
             />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: "0.8rem" }} />
             <Bar dataKey="Money In" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
             <Bar dataKey="Money Out" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
           </BarChart>

@@ -3,54 +3,58 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import axios from 'axios';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { subMinutes } from 'date-fns';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const realmId = searchParams.get('realmId');
   const returnedState = searchParams.get('state');
-  
-  const cookieStore = cookies();
-  const storedState = cookieStore.get('qb_oauth_state')?.value;
-
-  console.log("Returned state:", returnedState);
-  console.log("Stored cookie:", storedState);
-
-  // It's crucial to delete the state cookie after using it for security.
-  cookieStore.delete('qb_oauth_state');
 
   const errorUrl = new URL('/clients', req.url);
 
-  if (!storedState) {
-    errorUrl.searchParams.set('error', 'invalid_state');
-    errorUrl.searchParams.set('details', 'Your browser did not send the required security cookie. Please try clearing your cookies and connecting again.');
-    return NextResponse.redirect(errorUrl);
-  }
-
   if (!returnedState) {
-    errorUrl.searchParams.set('error', 'invalid_state');
-    errorUrl.searchParams.set('details', 'QuickBooks did not return the required security parameter. Please try connecting again.');
-    return NextResponse.redirect(errorUrl);
-  }
-
-  // Compare the state returned from QuickBooks with the one stored in the cookie.
-  if (decodeURIComponent(returnedState) !== storedState) {
-    console.error("CSRF Warning: State parameter mismatch.", {
-      returned: decodeURIComponent(returnedState),
-      stored: storedState,
-    });
-    errorUrl.searchParams.set('error', 'invalid_state');
-    errorUrl.searchParams.set('details', 'State parameter mismatch. Please try connecting again.');
-    return NextResponse.redirect(errorUrl);
-  }
-  
-  if (!code || !realmId) {
-    errorUrl.searchParams.set('error', 'missing_params');
-    errorUrl.searchParams.set('details', 'The connection was incomplete. Missing code or realmId from QuickBooks.');
+    errorUrl.searchParams.set('error', 'missing_state');
+    errorUrl.searchParams.set('details', 'QuickBooks did not return a state parameter. Authentication failed.');
     return NextResponse.redirect(errorUrl);
   }
 
   try {
+    // Verify the state parameter against Firestore
+    const q = query(collection(db, 'oauth_states'), where('state', '==', returnedState));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.error("Invalid or expired state parameter.", { returnedState });
+      errorUrl.searchParams.set('error', 'invalid_state');
+      errorUrl.searchParams.set('details', 'Invalid or expired state parameter. Please try connecting again.');
+      return NextResponse.redirect(errorUrl);
+    }
+
+    const doc = querySnapshot.docs[0];
+    const docData = doc.data();
+
+    // Optional: Check if the state is recent (e.g., created in the last 10 minutes)
+    const tenMinutesAgo = subMinutes(new Date(), 10);
+    if (docData.createdAt.toDate() < tenMinutesAgo) {
+        await deleteDoc(doc.ref); // Clean up expired state
+        console.error("Expired state parameter.", { returnedState });
+        errorUrl.searchParams.set('error', 'expired_state');
+        errorUrl.searchParams.set('details', 'Your connection request has expired. Please try again.');
+        return NextResponse.redirect(errorUrl);
+    }
+    
+    // Delete the state from Firestore so it can't be used again
+    await deleteDoc(doc.ref);
+    
+    if (!code || !realmId) {
+      errorUrl.searchParams.set('error', 'missing_params');
+      errorUrl.searchParams.set('details', 'The connection was incomplete. Missing code or realmId from QuickBooks.');
+      return NextResponse.redirect(errorUrl);
+    }
+
     // Exchange the authorization code for access and refresh tokens
     const tokenResponse = await axios.post(
       'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
@@ -76,13 +80,14 @@ export async function GET(req: Request) {
 
     const cookieOptions: Parameters<typeof cookies.set>[2] = {
         httpOnly: true,
-        secure: true,
+        secure: true, // Set to true for production with HTTPS
         sameSite: 'lax',
         path: '/',
         maxAge: 100 * 24 * 60 * 60, // ~100 days, aligns with refresh token expiry
     };
 
     // Set tokens in secure cookies
+    const cookieStore = cookies();
     cookieStore.set('qb_access_token', access_token, { ...cookieOptions, maxAge: expires_in });
     cookieStore.set('qb_refresh_token', refresh_token, cookieOptions);
     cookieStore.set('qb_realm_id', realmId, cookieOptions);

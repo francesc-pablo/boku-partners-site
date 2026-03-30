@@ -1,10 +1,9 @@
 'use server';
 
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import axios from 'axios';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { subMinutes } from 'date-fns';
 
 export async function GET(req: Request) {
@@ -22,7 +21,6 @@ export async function GET(req: Request) {
   }
 
   try {
-    // Verify the state parameter against Firestore
     const q = query(collection(db, 'oauth_states'), where('state', '==', returnedState));
     const querySnapshot = await getDocs(q);
 
@@ -33,21 +31,19 @@ export async function GET(req: Request) {
       return NextResponse.redirect(errorUrl);
     }
 
-    const doc = querySnapshot.docs[0];
-    const docData = doc.data();
+    const stateDoc = querySnapshot.docs[0];
+    const docData = stateDoc.data();
 
-    // Optional: Check if the state is recent (e.g., created in the last 10 minutes)
     const tenMinutesAgo = subMinutes(new Date(), 10);
     if (docData.createdAt.toDate() < tenMinutesAgo) {
-        await deleteDoc(doc.ref); // Clean up expired state
+        await deleteDoc(stateDoc.ref);
         console.error("Expired state parameter.", { returnedState });
         errorUrl.searchParams.set('error', 'expired_state');
         errorUrl.searchParams.set('details', 'Your connection request has expired. Please try again.');
         return NextResponse.redirect(errorUrl);
     }
     
-    // Delete the state from Firestore so it can't be used again
-    await deleteDoc(doc.ref);
+    await deleteDoc(stateDoc.ref);
     
     if (!code || !realmId) {
       errorUrl.searchParams.set('error', 'missing_params');
@@ -55,7 +51,6 @@ export async function GET(req: Request) {
       return NextResponse.redirect(errorUrl);
     }
 
-    // Exchange the authorization code for access and refresh tokens
     const tokenResponse = await axios.post(
       'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
       new URLSearchParams({
@@ -75,25 +70,20 @@ export async function GET(req: Request) {
       }
     );
 
-    const { access_token, refresh_token, expires_in } = tokenResponse.data;
-    const expiresAt = Date.now() + expires_in * 1000;
-
-    const cookieOptions: Parameters<typeof cookies.set>[2] = {
-        httpOnly: true,
-        secure: true, // Set to true for production with HTTPS
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 100 * 24 * 60 * 60, // ~100 days, aligns with refresh token expiry
-    };
-
-    // Set tokens in secure cookies
-    const cookieStore = cookies();
-    cookieStore.set('qb_access_token', access_token, { ...cookieOptions, maxAge: expires_in });
-    cookieStore.set('qb_refresh_token', refresh_token, cookieOptions);
-    cookieStore.set('qb_realm_id', realmId, cookieOptions);
-    cookieStore.set('qb_expires_at', expiresAt.toString(), cookieOptions);
+    const { access_token, refresh_token, expires_in, x_refresh_token_expires_in } = tokenResponse.data;
     
-    // Redirect to the dashboard on success
+    const tokenData = {
+      accessToken: access_token,
+      refreshToken: refresh_token,
+      realmId: realmId,
+      accessTokenExpiresAt: Date.now() + expires_in * 1000,
+      refreshTokenExpiresAt: Date.now() + x_refresh_token_expires_in * 1000,
+    };
+    
+    // Store tokens in Firestore instead of cookies
+    const tokenRef = doc(db, "quickbooks_tokens", "singleton_token");
+    await setDoc(tokenRef, tokenData);
+    
     const url = new URL('/clients', req.url);
     return NextResponse.redirect(url);
 

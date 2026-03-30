@@ -1,4 +1,3 @@
-'use server';
 
 function flattenReportRows(rows: any[] | undefined): { name: string; value: string }[] {
     let flat: { name: string; value: string }[] = [];

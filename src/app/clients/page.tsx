@@ -11,17 +11,32 @@ export default function ClientsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     // Handle errors from the OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
     const qbError = urlParams.get('error');
     const qbErrorDetails = urlParams.get('details');
+    const qbSuccess = urlParams.get('success');
+
     if (qbError) {
-      setError(`QuickBooks Connection Failed: ${qbError}. ${qbErrorDetails || 'Please try connecting again.'}`);
+      let decodedDetails = qbErrorDetails;
+      try {
+        if (decodedDetails) {
+          decodedDetails = JSON.stringify(JSON.parse(decodedDetails), null, 2);
+        }
+      } catch (e) {}
+
+      setError(`QuickBooks Connection Failed. Error: ${qbError}. Details: ${decodedDetails || 'No additional details.'}`);
       // Clear the error from the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+    if (qbSuccess) {
+      setSuccess('Successfully connected to QuickBooks! Fetching your data...');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
 
     async function fetchDashboardData() {
       try {
@@ -46,6 +61,7 @@ export default function ClientsPage() {
 
         const dashboardData = await res.json();
         setData(dashboardData);
+        setSuccess(null); // Clear success message after data is loaded
       } catch (e: any) {
         if (!qbError) { // Don't overwrite the more specific OAuth error
             setError(e.message);
@@ -94,7 +110,9 @@ export default function ClientsPage() {
           <ClientDashboard data={data} />
         ) : (
           <div className="flex flex-col items-center gap-8">
-            {error && <Alert variant="destructive"><AlertTitle>Connection Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
+            {error && <Alert variant="destructive"><AlertTitle>Connection Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
+            {success && !error && <Alert><AlertTitle>Success</AlertTitle><AlertDescription>{success}</AlertDescription></Alert>}
+
             <Card className="max-w-md mx-auto w-full">
                 <CardHeader className="text-center">
                 <CardTitle>Connect to QuickBooks</CardTitle>

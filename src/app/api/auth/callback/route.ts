@@ -14,6 +14,12 @@ export async function GET(req: Request) {
 
   const errorUrl = new URL('/clients', req.url);
 
+  // Debugging logs from user guide
+  console.log("CALLBACK TRIGGERED");
+  console.log("CODE:", code);
+  console.log("REALM ID:", realmId);
+  console.log("RETURNED STATE:", returnedState);
+  
   if (!returnedState) {
     errorUrl.searchParams.set('error', 'missing_state');
     errorUrl.searchParams.set('details', 'QuickBooks did not return a state parameter. Authentication failed.');
@@ -44,6 +50,7 @@ export async function GET(req: Request) {
     }
     
     await deleteDoc(stateDoc.ref);
+    console.log("State validated and deleted successfully.");
     
     if (!code || !realmId) {
       errorUrl.searchParams.set('error', 'missing_params');
@@ -51,6 +58,7 @@ export async function GET(req: Request) {
       return NextResponse.redirect(errorUrl);
     }
 
+    console.log("Exchanging authorization code for tokens...");
     const tokenResponse = await axios.post(
       'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
       new URLSearchParams({
@@ -70,7 +78,12 @@ export async function GET(req: Request) {
       }
     );
 
+    console.log("TOKEN RESPONSE:", tokenResponse.data);
     const { access_token, refresh_token, expires_in, x_refresh_token_expires_in } = tokenResponse.data;
+    
+    if (!access_token || !refresh_token) {
+        throw new Error("Token exchange failed. Did not receive access_token or refresh_token.");
+    }
     
     const tokenData = {
       accessToken: access_token,
@@ -80,11 +93,13 @@ export async function GET(req: Request) {
       refreshTokenExpiresAt: Date.now() + x_refresh_token_expires_in * 1000,
     };
     
-    // Store tokens in Firestore instead of cookies
+    console.log("Saving token data to Firestore...");
     const tokenRef = doc(db, "quickbooks_tokens", "singleton_token");
     await setDoc(tokenRef, tokenData);
+    console.log("Token data saved successfully to Firestore.");
     
     const url = new URL('/clients', req.url);
+    console.log("Redirecting to client dashboard...");
     return NextResponse.redirect(url);
 
   } catch (error) {
@@ -92,6 +107,7 @@ export async function GET(req: Request) {
     const url = new URL('/clients', req.url);
     url.searchParams.set('error', 'callback_failed');
     if (axios.isAxiosError(error) && error.response) {
+        console.error("QuickBooks API Error during token exchange:", error.response.data);
         url.searchParams.set('details', JSON.stringify(error.response.data));
     } else if (error instanceof Error) {
         url.searchParams.set('details', error.message);

@@ -67,7 +67,11 @@ function ClientPageContent() {
 
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({ error: 'Failed to parse error response from server.' }));
-          throw new Error(errorData.error || 'Failed to fetch dashboard data.');
+          let fullError = errorData.error || 'Failed to fetch dashboard data.';
+          if (errorData.details) {
+            fullError += `\n\nDETAILS: ${errorData.details}`;
+          }
+          throw new Error(fullError);
         }
 
         const dashboardData = await res.json();

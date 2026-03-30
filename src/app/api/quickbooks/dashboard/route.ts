@@ -19,12 +19,14 @@ export async function GET() {
     return NextResponse.json(processedData);
 
   } catch (error: any) {
-    console.error('[QB Dashboard API Error]', error.message);
+    console.error('[QB Dashboard API Error]', error);
     
-    if (error.message.includes('QuickBooks not connected') || error.message.includes('Failed to refresh QuickBooks token')) {
-        return NextResponse.json({ error: error.message }, { status: 404 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (errorMessage.includes('QuickBooks not connected') || errorMessage.includes('Failed to refresh QuickBooks token')) {
+        return NextResponse.json({ error: errorMessage }, { status: 404 });
     }
     
-    return NextResponse.json({ error: 'An internal server error occurred while fetching dashboard data.' }, { status: 500 });
+    return NextResponse.json({ error: 'An internal server error occurred while fetching dashboard data.', details: errorMessage }, { status: 500 });
   }
 }

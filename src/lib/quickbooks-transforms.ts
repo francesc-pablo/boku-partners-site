@@ -119,9 +119,9 @@ export function parseQuickBooksData(data: any) {
             totalCustomers: customers.length,
         },
         reports: {
-            pnlRows,
-            balanceSheetRows,
-            cashFlowRows,
+            pnlRows: pnlRows,
+            balanceSheetRows: balanceRows,
+            cashFlowRows: cashflowRows,
         },
         charts: {
             pnlChartData: [{

@@ -13,14 +13,23 @@ export async function GET(req: Request) {
   const cookieStore = cookies();
   const storedState = cookieStore.get('qb_oauth_state')?.value;
 
+  console.log("Returned state:", returnedState);
+  console.log("Stored cookie:", storedState);
+
   // It's crucial to delete the state cookie after using it for security.
   cookieStore.delete('qb_oauth_state');
 
   const errorUrl = new URL('/clients', req.url);
 
-  if (!returnedState || !storedState) {
+  if (!storedState) {
     errorUrl.searchParams.set('error', 'invalid_state');
-    errorUrl.searchParams.set('details', 'State parameter is missing from request or cookie. Please try again.');
+    errorUrl.searchParams.set('details', 'Your browser did not send the required security cookie. Please try clearing your cookies and connecting again.');
+    return NextResponse.redirect(errorUrl);
+  }
+
+  if (!returnedState) {
+    errorUrl.searchParams.set('error', 'invalid_state');
+    errorUrl.searchParams.set('details', 'QuickBooks did not return the required security parameter. Please try connecting again.');
     return NextResponse.redirect(errorUrl);
   }
 
@@ -89,6 +98,8 @@ export async function GET(req: Request) {
     url.searchParams.set('error', 'callback_failed');
     if (axios.isAxiosError(error) && error.response) {
         url.searchParams.set('details', JSON.stringify(error.response.data));
+    } else if (error instanceof Error) {
+        url.searchParams.set('details', error.message);
     }
     return NextResponse.redirect(url);
   }

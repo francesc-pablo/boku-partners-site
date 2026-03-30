@@ -8,6 +8,8 @@ export async function GET() {
   const state = JSON.stringify({
     nonce: crypto.randomUUID(),
   });
+  
+  const encodedState = encodeURIComponent(state);
 
   const authUrl =
     `https://appcenter.intuit.com/connect/oauth2` +
@@ -15,7 +17,7 @@ export async function GET() {
     `&redirect_uri=${encodeURIComponent(process.env.QB_REDIRECT_URI!)}` +
     `&response_type=code` +
     `&scope=com.intuit.quickbooks.accounting` +
-    `&state=${encodeURIComponent(state)}`;
+    `&state=${encodedState}`;
 
   const response = NextResponse.redirect(new URL(authUrl));
 
@@ -25,6 +27,7 @@ export async function GET() {
     secure: true,
     sameSite: 'lax',
     path: '/',
+    maxAge: 60 * 10, // 10 minutes
   });
 
   return response;

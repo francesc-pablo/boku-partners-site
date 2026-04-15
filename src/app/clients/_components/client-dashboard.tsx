@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
@@ -56,14 +57,11 @@ const ReportRow = ({ row, level = 0 }: { row: any; level?: number }) => {
 };
 
 
-const ReportTable = ({ title, data }: { title: string; data: ReportData }) => {
+const ReportTable = ({ data }: { data: ReportData }) => {
   if (data.error) {
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
                 <p className="text-destructive">Could not load report: {data.error}</p>
             </CardContent>
         </Card>
@@ -73,10 +71,7 @@ const ReportTable = ({ title, data }: { title: string; data: ReportData }) => {
   if (!data || !data.Columns?.Column || !data.Rows?.Row) {
       return (
           <Card>
-              <CardHeader>
-                  <CardTitle>{title}</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                   <p>No data available for this report.</p>
               </CardContent>
           </Card>
@@ -88,10 +83,7 @@ const ReportTable = ({ title, data }: { title: string; data: ReportData }) => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <div className="relative max-h-[600px] overflow-auto">
             <Table>
             <TableHeader>
@@ -116,10 +108,21 @@ const ReportTable = ({ title, data }: { title: string; data: ReportData }) => {
 
 export function ClientDashboard({ data }: { data: { pnl: ReportData; balance: ReportData; cashflow: ReportData } }) {
   return (
-    <div className="space-y-8">
-      <ReportTable title="Profit and Loss" data={data.pnl} />
-      <ReportTable title="Balance Sheet" data={data.balance} />
-      <ReportTable title="Cash Flow" data={data.cashflow} />
-    </div>
+    <Tabs defaultValue="pnl" className="w-full">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="pnl">Profit and Loss</TabsTrigger>
+        <TabsTrigger value="balance">Balance Sheet</TabsTrigger>
+        <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
+      </TabsList>
+      <TabsContent value="pnl" className="pt-6">
+        <ReportTable data={data.pnl} />
+      </TabsContent>
+      <TabsContent value="balance" className="pt-6">
+        <ReportTable data={data.balance} />
+      </TabsContent>
+      <TabsContent value="cashflow" className="pt-6">
+        <ReportTable data={data.cashflow} />
+      </TabsContent>
+    </Tabs>
   );
 }

@@ -41,7 +41,8 @@ const ReportRow = ({ row, level = 0 }: { row: any; level?: number }) => {
             key={index}
             className={cn(
               (isHeader || isSummary) && 'font-bold',
-              'whitespace-nowrap'
+              'whitespace-nowrap',
+              'border-r last:border-r-0'
             )}
             style={{ paddingLeft: index === 0 ? `${1 + level * 1.5}rem` : undefined }}
           >
@@ -83,14 +84,14 @@ const ReportTable = ({ data }: { data: ReportData }) => {
 
   return (
     <Card>
-      <CardContent className="p-6">
-        <div className="relative overflow-x-auto">
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
           <div className="max-h-[600px] overflow-y-auto">
             <Table>
             <TableHeader>
                 <TableRow>
                 {columns.map((col: any) => (
-                    <TableHead key={col.ColTitle} className="whitespace-nowrap">{col.ColTitle}</TableHead>
+                    <TableHead key={col.ColTitle} className="whitespace-nowrap border-r last:border-r-0">{col.ColTitle}</TableHead>
                 ))}
                 </TableRow>
             </TableHeader>

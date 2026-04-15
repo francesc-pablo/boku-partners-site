@@ -1,187 +1,234 @@
 'use client';
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, Sector } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { ClientDashboard } from './_components/client-dashboard';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useEffect, useState, Suspense, useCallback } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useSearchParams } from 'next/navigation';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
-const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-
-type ChartData = {
-  name: string;
-  [key: string]: number | string;
-};
-
-// P&L Chart
-export function PnlChart({ data }: { data: ChartData[] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Income vs Expenses</CardTitle>
-        <CardDescription>A summary of your profit and loss.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value as number)} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--background))',
-                borderColor: 'hsl(var(--border))',
-                borderRadius: '0.5rem',
-              }}
-              formatter={(value: number) => formatCurrency(value)}
-            />
-            <Legend wrapperStyle={{ fontSize: "0.8rem" }} />
-            <Bar dataKey="Income" fill="hsl(var(--chart-1))" name="Total Income" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Expenses" fill="hsl(var(--chart-2))" name="Total Expenses" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Balance Sheet Chart
-type AssetData = {
-    name: string;
-    value: number;
-}
-
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
-
-const renderActiveShape = (props: any) => {
-    const RADIAN = Math.PI / 180;
-    const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
-    const sin = Math.sin(-RADIAN * midAngle);
-    const cos = Math.cos(-RADIAN * midAngle);
-    const sx = cx + (outerRadius + 10) * cos;
-    const sy = cy + (outerRadius + 10) * sin;
-    const mx = cx + (outerRadius + 30) * cos;
-    const my = cy + (outerRadius + 30) * sin;
-    const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-    const ey = my;
-    const textAnchor = cos >= 0 ? 'start' : 'end';
-  
+function PageSkeleton() {
     return (
-      <g>
-        <text x={cx} y={cy} dy={8} textAnchor="middle" fill="hsl(var(--foreground))" className="font-bold text-sm">
-          {payload.name}
-        </text>
-        <Sector
-          cx={cx}
-          cy={cy}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          fill={fill}
-        />
-        <Sector
-          cx={cx}
-          cy={cy}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          innerRadius={outerRadius + 6}
-          outerRadius={outerRadius + 10}
-          fill={fill}
-        />
-        <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
-        <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))">{formatCurrency(value)}</text>
-        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="hsl(var(--muted-foreground))">
-          {`(${(percent * 100).toFixed(2)}%)`}
-        </text>
-      </g>
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                 <Skeleton className="h-10" />
+                 <Skeleton className="h-10" />
+                 <Skeleton className="h-10" />
+            </div>
+            <Skeleton className="h-96" />
+            <Skeleton className="h-96" />
+            <Skeleton className="h-96" />
+        </div>
     );
-};
+}
 
-export function BalanceSheetChart({ data }: { data: AssetData[] }) {
-    const [activeIndex, setActiveIndex] = useState(0);
+function ClientPageContent() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  
+  const searchParams = useSearchParams();
 
-    const onPieEnter = (_: any, index: number) => {
-        setActiveIndex(index);
-    };
-    
-    if (!data || data.length === 0) {
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Asset Breakdown</CardTitle>
-                    <CardDescription>A summary of your company's assets.</CardDescription>
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 6, 1));
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  
+  const [isConnected, setIsConnected] = useState(false);
+
+  const fetchDashboardData = useCallback(async () => {
+    if (!startDate || !endDate) return;
+
+    setLoading(true);
+    setError(null);
+
+    const start = format(startDate, 'yyyy-MM-dd');
+    const end = format(endDate, 'yyyy-MM-dd');
+
+    try {
+      const res = await fetch(`/api/quickbooks/dashboard?startDate=${start}&endDate=${end}`);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to fetch data.');
+      }
+      
+      const dashboardData = await res.json();
+      setData(dashboardData);
+      setIsConnected(true);
+    } catch (e: any) {
+      if (e.message.includes('QuickBooks not connected')) {
+          setIsConnected(false);
+          setData(null);
+      } else {
+          setError(e.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    const qbError = searchParams.get('error');
+    const qbErrorDetails = searchParams.get('details');
+    const qbSuccess = searchParams.get('success');
+
+    if (qbError) {
+      setError(`QuickBooks Connection Failed: ${qbError}. ${qbErrorDetails || ''}`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    if (qbSuccess) {
+      setSuccess('Successfully connected to QuickBooks! Fetching your data...');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      fetchDashboardData();
+    } else {
+        // Initial check to see if we are already connected
+        const checkConnection = async () => {
+             setLoading(true);
+             try {
+                const res = await fetch(`/api/quickbooks/dashboard?startDate=${format(startDate!, 'yyyy-MM-dd')}&endDate=${format(endDate!, 'yyyy-MM-dd')}`);
+                 if (res.status === 404) {
+                     setIsConnected(false);
+                     setData(null);
+                     return;
+                 }
+                 if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.details || errorData.error || 'Failed to check connection status.');
+                 }
+                 const dashboardData = await res.json();
+                 setData(dashboardData);
+                 setIsConnected(true);
+             } catch (e: any) {
+                 if (e.message.includes('QuickBooks not connected')) {
+                     setIsConnected(false);
+                     setData(null);
+                 } else {
+                     setError(e.message);
+                 }
+             } finally {
+                 setLoading(false);
+             }
+        };
+        checkConnection();
+    }
+  }, [searchParams, fetchDashboardData, startDate, endDate]);
+
+  return (
+    <>
+      <section className="bg-secondary">
+        <div className="container mx-auto text-center">
+          <h1 className="text-4xl md:text-5xl font-headline font-bold">Client Portal</h1>
+          <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            View your QuickBooks financial data at a glance.
+          </p>
+        </div>
+      </section>
+
+      <section className="container mx-auto">
+        {loading && !data && <PageSkeleton />}
+
+        {!loading && !isConnected && (
+            <div className="flex flex-col items-center gap-8">
+            {error && <Alert variant="destructive" className="max-w-2xl"><AlertTitle>Connection Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
+            
+            <Card className="max-w-md mx-auto w-full">
+                <CardHeader className="text-center">
+                <CardTitle>Connect to QuickBooks</CardTitle>
+                <CardDescription>
+                    To view your financial dashboard, you need to connect your QuickBooks Online account.
+                </CardDescription>
                 </CardHeader>
-                <CardContent className="flex items-center justify-center h-[300px]">
-                    <p className="text-muted-foreground">No asset data to display.</p>
+                <CardContent className="flex justify-center">
+                <Button asChild>
+                    <a href="/api/auth/connect">Connect to QuickBooks</a>
+                </Button>
                 </CardContent>
             </Card>
-        )
-    }
+          </div>
+        )}
 
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Asset Breakdown</CardTitle>
-                <CardDescription>A summary of your company's assets.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                        <Pie
-                            activeIndex={activeIndex}
-                            activeShape={renderActiveShape}
-                            data={data}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={80}
-                            outerRadius={110}
-                            fill="hsl(var(--chart-1))"
-                            dataKey="value"
-                            onMouseEnter={onPieEnter}
-                        >
-                        {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                        </Pie>
-                         <Legend
-                            wrapperStyle={{ fontSize: "0.8rem" }}
-                            formatter={(value) => <span className="text-muted-foreground">{value}</span>}
-                         />
-                    </PieChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-    );
+        {isConnected && (
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Report Filters</CardTitle>
+                        <CardDescription>Select a date range to view your financial reports.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col md:flex-row items-center gap-4">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !startDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={startDate}
+                                onSelect={setStartDate}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                         <Popover>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !endDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={endDate}
+                                onSelect={setEndDate}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <Button onClick={fetchDashboardData} disabled={loading}>
+                            {loading ? 'Loading...' : 'Run Report'}
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                {error && <Alert variant="destructive" className="max-w-2xl mx-auto"><AlertTitle>Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
+
+                {loading ? <PageSkeleton /> : data ? <ClientDashboard data={data} /> : (
+                    <div className="text-center p-8 border rounded-lg">
+                        <p>No data to display for the selected period.</p>
+                    </div>
+                )}
+            </div>
+        )}
+      </section>
+    </>
+  );
 }
 
-// Monthly Cash Flow Chart
-export function MonthlyCashChart({ data }: { data: ChartData[] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Monthly Cash Flow</CardTitle>
-        <CardDescription>Money In vs Money Out over the last 6 months (cash basis).</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value as number)} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--background))',
-                borderColor: 'hsl(var(--border))',
-                borderRadius: '0.5rem',
-              }}
-              formatter={(value: number) => formatCurrency(value)}
-            />
-            <Legend wrapperStyle={{ fontSize: "0.8rem" }} />
-            <Bar dataKey="Money In" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Money Out" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  );
+export default function ClientsPage() {
+    return (
+        <Suspense fallback={<PageSkeleton />}>
+            <ClientPageContent />
+        </Suspense>
+    );
 }

@@ -4,25 +4,25 @@ import { Button } from '@/components/ui/button';
 import { ClientDashboard } from './_components/client-dashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSearchParams } from 'next/navigation';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 function PageSkeleton() {
     return (
         <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Skeleton className="h-28" />
-                <Skeleton className="h-28" />
-                <Skeleton className="h-28" />
-                <Skeleton className="h-28" />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                 <Skeleton className="h-10" />
+                 <Skeleton className="h-10" />
+                 <Skeleton className="h-10" />
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Skeleton className="h-28" />
-                <Skeleton className="h-28" />
-                <Skeleton className="h-28" />
-                <Skeleton className="h-28" />
-            </div>
+            <Skeleton className="h-96" />
+            <Skeleton className="h-96" />
             <Skeleton className="h-96" />
         </div>
     );
@@ -36,59 +36,88 @@ function ClientPageContent() {
   
   const searchParams = useSearchParams();
 
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 6, 1));
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  
+  const [isConnected, setIsConnected] = useState(false);
+
+  const fetchDashboardData = useCallback(async () => {
+    if (!startDate || !endDate) return;
+
+    setLoading(true);
+    setError(null);
+
+    const start = format(startDate, 'yyyy-MM-dd');
+    const end = format(endDate, 'yyyy-MM-dd');
+
+    try {
+      const res = await fetch(`/api/quickbooks/dashboard?startDate=${start}&endDate=${end}`);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to fetch data.');
+      }
+      
+      const dashboardData = await res.json();
+      setData(dashboardData);
+      setIsConnected(true);
+    } catch (e: any) {
+      if (e.message.includes('QuickBooks not connected')) {
+          setIsConnected(false);
+          setData(null);
+      } else {
+          setError(e.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [startDate, endDate]);
+
   useEffect(() => {
     const qbError = searchParams.get('error');
     const qbErrorDetails = searchParams.get('details');
     const qbSuccess = searchParams.get('success');
 
     if (qbError) {
-      setError(`QuickBooks Connection Failed. Error: ${qbError}. Details: ${qbErrorDetails || 'No additional details provided.'}`);
+      setError(`QuickBooks Connection Failed: ${qbError}. ${qbErrorDetails || ''}`);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     if (qbSuccess) {
       setSuccess('Successfully connected to QuickBooks! Fetching your data...');
       window.history.replaceState({}, document.title, window.location.pathname);
+      fetchDashboardData();
+    } else {
+        // Initial check to see if we are already connected
+        const checkConnection = async () => {
+             setLoading(true);
+             try {
+                const res = await fetch(`/api/quickbooks/dashboard?startDate=${format(startDate!, 'yyyy-MM-dd')}&endDate=${format(endDate!, 'yyyy-MM-dd')}`);
+                 if (res.status === 404) {
+                     setIsConnected(false);
+                     setData(null);
+                     return;
+                 }
+                 if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.details || errorData.error || 'Failed to check connection status.');
+                 }
+                 const dashboardData = await res.json();
+                 setData(dashboardData);
+                 setIsConnected(true);
+             } catch (e: any) {
+                 if (e.message.includes('QuickBooks not connected')) {
+                     setIsConnected(false);
+                     setData(null);
+                 } else {
+                     setError(e.message);
+                 }
+             } finally {
+                 setLoading(false);
+             }
+        };
+        checkConnection();
     }
-
-    async function fetchDashboardData() {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/quickbooks/dashboard');
-
-        if (res.status === 404) {
-          const errorData = await res.json().catch(() => null);
-          setData(null);
-          // Only set this error if a more specific one from the redirect isn't already present
-          if (!qbError) {
-              setError(errorData?.error || 'QuickBooks not connected.');
-          }
-          return;
-        }
-
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({ error: 'Failed to parse error response from server.' }));
-          let fullError = errorData.error || 'Failed to fetch dashboard data.';
-          if (errorData.details) {
-            fullError += `\n\nDETAILS: ${errorData.details}`;
-          }
-          throw new Error(fullError);
-        }
-
-        const dashboardData = await res.json();
-        setData(dashboardData);
-        setError(null); // Clear previous errors on successful fetch
-        setSuccess(null); // Clear success message after data is loaded
-      } catch (e: any) {
-        if (!qbError) {
-            setError(e.message);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchDashboardData();
-  }, [searchParams]);
+  }, [searchParams, fetchDashboardData, startDate, endDate]);
 
   return (
     <>
@@ -102,15 +131,12 @@ function ClientPageContent() {
       </section>
 
       <section className="container mx-auto">
-        {loading ? (
-          <PageSkeleton />
-        ) : data ? (
-          <ClientDashboard data={data} />
-        ) : (
-          <div className="flex flex-col items-center gap-8">
-            {error && <Alert variant="destructive" className="max-w-2xl"><AlertTitle>Connection Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
-            {success && !error && <Alert className="max-w-2xl"><AlertTitle>Success</AlertTitle><AlertDescription>{success}</AlertDescription></Alert>}
+        {loading && !data && <PageSkeleton />}
 
+        {!loading && !isConnected && (
+            <div className="flex flex-col items-center gap-8">
+            {error && <Alert variant="destructive" className="max-w-2xl"><AlertTitle>Connection Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
+            
             <Card className="max-w-md mx-auto w-full">
                 <CardHeader className="text-center">
                 <CardTitle>Connect to QuickBooks</CardTitle>
@@ -124,21 +150,75 @@ function ClientPageContent() {
                 </Button>
                 </CardContent>
             </Card>
-            <Alert className="max-w-2xl mx-auto w-full" variant="default">
-                <AlertTitle className="text-lg">Setup Instructions</AlertTitle>
-                <AlertDescription>
-                    <ol className="list-decimal list-inside space-y-2 mt-2">
-                        <li>Go to your <a href="https://developer.intuit.com/app/builder/myapps" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Intuit Developer Dashboard</a>.</li>
-                        <li>Under the "Production" keys, add the following URL to your list of Redirect URIs:
-                            <div className="bg-background p-2 rounded-md my-2">
-                                <p className="font-mono text-sm break-all">{window.location.origin}/api/auth/callback</p>
-                            </div>
-                        </li>
-                        <li>Ensure your <code>.env.local</code> file contains your production Client ID and Secret.</li>
-                    </ol>
-                </AlertDescription>
-            </Alert>
           </div>
+        )}
+
+        {isConnected && (
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Report Filters</CardTitle>
+                        <CardDescription>Select a date range to view your financial reports.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col md:flex-row items-center gap-4">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !startDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={startDate}
+                                onSelect={setStartDate}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                         <Popover>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !endDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={endDate}
+                                onSelect={setEndDate}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <Button onClick={fetchDashboardData} disabled={loading}>
+                            {loading ? 'Loading...' : 'Run Report'}
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                {error && <Alert variant="destructive" className="max-w-2xl mx-auto"><AlertTitle>Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
+
+                {loading ? <PageSkeleton /> : data ? <ClientDashboard data={data} /> : (
+                    <div className="text-center p-8 border rounded-lg">
+                        <p>No data to display for the selected period.</p>
+                    </div>
+                )}
+            </div>
         )}
       </section>
     </>

@@ -1,56 +1,42 @@
 'use server';
 
 import { qbApiRequest } from '@/lib/quickbooks-api';
-import { subMonths, startOfMonth, endOfMonth, format } from 'date-fns';
 
 export async function getDashboardData({
   token,
   realmId,
+  startDate,
+  endDate,
 }: {
   token: string;
   realmId: string;
+  startDate: string;
+  endDate: string;
 }) {
 
-  const getMonthlyPnl = async (months = 6) => {
-    const today = new Date();
-    const reportPromises = [];
-
-    for (let i = months - 1; i >= 0; i--) {
-        const targetDate = subMonths(today, i);
-        const startDate = format(startOfMonth(targetDate), 'yyyy-MM-dd');
-        const endDate = format(endOfMonth(targetDate), 'yyyy-MM-dd');
-        const monthName = format(targetDate, 'MMM');
-
-        const endpoint = `reports/ProfitAndLoss?start_date=${startDate}&end_date=${endDate}&accounting_method=Cash`;
-        reportPromises.push(qbApiRequest({ token, realmId, endpoint }).then(data => ({ data, monthName })));
-    }
-    
-    const results = await Promise.allSettled(reportPromises);
-    return results.map(res => res.status === 'fulfilled' ? res.value : { error: true, monthName: 'N/A', data: null });
+  const getReport = (reportName: string) => {
+    const endpoint = `reports/${reportName}?start_date=${startDate}&end_date=${endDate}&summarize_column_by=Month`;
+    return qbApiRequest({ token, realmId, endpoint });
+  };
+  
+  const getBalanceSheet = () => {
+    // Balance sheet is a snapshot, so end_date is more relevant, but we pass both for consistency.
+    const endpoint = `reports/BalanceSheet?start_date=${startDate}&end_date=${endDate}&summarize_column_by=Month`;
+    return qbApiRequest({ token, realmId, endpoint });
   }
 
-  const [pnlRes, balanceRes, cashflowRes, customersRes, invoicesRes, vendorsRes, billsRes, monthlyPnlRes] =
+  const [pnlRes, balanceRes, cashflowRes] =
     await Promise.allSettled([
-      qbApiRequest({ token, realmId, endpoint: 'reports/ProfitAndLoss?accounting_method=Cash' }),
-      qbApiRequest({ token, realmId, endpoint: 'reports/BalanceSheet' }),
-      qbApiRequest({ token, realmId, endpoint: 'reports/CashFlow?accounting_method=Cash' }),
-      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Customer MAXRESULTS 1000' }),
-      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Invoice ORDER BY TxnDate DESC MAXRESULTS 100' }),
-      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Vendor MAXRESULTS 1000' }),
-      qbApiRequest({ token, realmId, endpoint: 'query?query=select * from Bill ORDER BY TxnDate DESC MAXRESULTS 100' }),
-      getMonthlyPnl(6)
+      getReport('ProfitAndLoss'),
+      getBalanceSheet(),
+      getReport('CashFlow'),
     ]);
   
-  const getData = (res: PromiseSettledResult<any>) => res.status === 'fulfilled' ? res.value : null;
+  const getData = (res: PromiseSettledResult<any>) => res.status === 'fulfilled' ? res.value : { error: res.reason?.message || 'Failed to fetch report' };
 
   return {
     pnl: getData(pnlRes),
     balance: getData(balanceRes),
     cashflow: getData(cashflowRes),
-    customers: getData(customersRes),
-    invoices: getData(invoicesRes),
-    vendors: getData(vendorsRes),
-    bills: getData(billsRes),
-    monthlyPnl: getData(monthlyPnlRes),
   };
 }

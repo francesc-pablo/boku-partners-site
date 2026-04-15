@@ -1,142 +1,234 @@
+'use client';
 
-function flattenReportRows(rows: any[] | undefined): { name: string; value: string }[] {
-    let flat: { name: string; value: string }[] = [];
-    if (!rows) return flat;
+import { Button } from '@/components/ui/button';
+import { ClientDashboard } from './_components/client-dashboard';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useEffect, useState, Suspense, useCallback } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useSearchParams } from 'next/navigation';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
-    const rowsArray = Array.isArray(rows) ? rows : [rows];
+function PageSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                 <Skeleton className="h-10" />
+                 <Skeleton className="h-10" />
+                 <Skeleton className="h-10" />
+            </div>
+            <Skeleton className="h-96" />
+            <Skeleton className="h-96" />
+            <Skeleton className="h-96" />
+        </div>
+    );
+}
+
+function ClientPageContent() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   
-    for (const row of rowsArray) {
-      if (!row) continue;
+  const searchParams = useSearchParams();
 
-      if (row.Header) {
-        const headerName = row.Header.ColData?.[0]?.value?.trim() || '';
-        const summaryValue = row.Summary?.ColData?.[1]?.value || '0';
-        if (headerName) {
-            flat.push({ name: headerName, value: summaryValue });
-        }
-        
-        const summaryName = row.Summary?.ColData?.[0]?.value?.trim();
-        if (summaryName && summaryName !== headerName) {
-            flat.push({ name: summaryName, value: summaryValue });
-        }
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 6, 1));
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  
+  const [isConnected, setIsConnected] = useState(false);
 
-        if (row.Rows?.Row) {
-          flat = flat.concat(flattenReportRows(row.Rows.Row));
-        }
-      } else if (row.ColData) {
-        const name = row.ColData?.[0]?.value?.trim() || '';
-        const value = row.ColData?.[1]?.value || '0';
-        if (name) {
-            flat.push({ name, value });
-        }
+  const fetchDashboardData = useCallback(async () => {
+    if (!startDate || !endDate) return;
+
+    setLoading(true);
+    setError(null);
+
+    const start = format(startDate, 'yyyy-MM-dd');
+    const end = format(endDate, 'yyyy-MM-dd');
+
+    try {
+      const res = await fetch(`/api/quickbooks/dashboard?startDate=${start}&endDate=${end}`);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to fetch data.');
       }
+      
+      const dashboardData = await res.json();
+      setData(dashboardData);
+      setIsConnected(true);
+    } catch (e: any) {
+      if (e.message.includes('QuickBooks not connected')) {
+          setIsConnected(false);
+          setData(null);
+      } else {
+          setError(e.message);
+      }
+    } finally {
+      setLoading(false);
     }
-    return flat;
-}
+  }, [startDate, endDate]);
 
-const getValue = (rows: {name: string, value: string}[], name: string) => {
-    const row = rows.find(r => r.name === name);
-    const rawValue = row?.value?.replace(/,/g, '') || '0';
-    if (rawValue.startsWith('(') && rawValue.endsWith(')')) {
-        return -parseFloat(rawValue.replace(/[()]/g, ''));
+  useEffect(() => {
+    const qbError = searchParams.get('error');
+    const qbErrorDetails = searchParams.get('details');
+    const qbSuccess = searchParams.get('success');
+
+    if (qbError) {
+      setError(`QuickBooks Connection Failed: ${qbError}. ${qbErrorDetails || ''}`);
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
-    return parseFloat(rawValue);
-}
-
-export function parseQuickBooksData(data: any) {
-    if (!data.pnl || !data.balance || !data.cashflow || !data.customers || !data.invoices || !data.vendors || !data.bills || !data.monthlyPnl) {
-        return null;
-    }
-
-    const pnlRows = flattenReportRows(data.pnl.Rows?.Row);
-    const balanceRows = flattenReportRows(data.balance.Rows?.Row);
-    const cashflowRows = flattenReportRows(data.cashflow.Rows?.Row);
-
-    // P&L
-    const totalIncome = getValue(pnlRows, 'Total Income');
-    const grossProfit = getValue(pnlRows, 'Gross Profit');
-    const totalExpenses = getValue(pnlRows, 'Total Expenses');
-    const netIncome = getValue(pnlRows, 'Net Income');
-
-    // Balance Sheet
-    const cash = getValue(balanceRows, 'Total Bank Accounts');
-    const currentAssets = getValue(balanceRows, 'Total Current Assets');
-    const totalAssets = getValue(balanceRows, 'Total Assets');
-    const totalLiabilities = getValue(balanceRows, 'Total Liabilities');
-    const totalEquity = getValue(balanceRows, 'Total Equity');
-
-    // Asset breakdown for chart
-    const assetBreakdown = [
-        { name: 'Bank Accounts', value: cash },
-        { name: 'Other Current Assets', value: currentAssets - cash },
-        { name: 'Fixed Assets', value: getValue(balanceRows, 'Total Fixed Assets') },
-        { name: 'Other Assets', value: getValue(balanceRows, 'Total Other Assets') },
-    ].filter(asset => asset.value > 0);
-
-    // Cash Flow
-    const netCashFromOps = getValue(cashflowRows, 'Net Cash Provided by Operating Activities');
-    
-    // Invoices
-    const invoices = data.invoices?.QueryResponse?.Invoice || [];
-    const totalOpenInvoices = invoices.reduce((acc: any, inv: any) => acc + inv.Balance, 0);
-
-    // Bills
-    const bills = data.bills?.QueryResponse?.Bill || [];
-    const totalOpenBills = bills.reduce((acc: any, bill: any) => acc + bill.Balance, 0);
-
-    // Monthly PNL Chart Data
-    const monthlyData = (data.monthlyPnl || []).map((report: any) => {
-        if (report.error || !report.data) {
-            return { name: report.monthName, 'Money In': 0, 'Money Out': 0 };
-        }
-        const monthlyPnlRows = flattenReportRows(report.data.Rows?.Row);
-        const monthlyTotalIncome = getValue(monthlyPnlRows, 'Total Income');
-        const monthlyTotalExpenses = getValue(monthlyPnlRows, 'Total Expenses');
-        return {
-            name: report.monthName,
-            'Money In': monthlyTotalIncome,
-            'Money Out': monthlyTotalExpenses,
+    if (qbSuccess) {
+      setSuccess('Successfully connected to QuickBooks! Fetching your data...');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      fetchDashboardData();
+    } else {
+        // Initial check to see if we are already connected
+        const checkConnection = async () => {
+             setLoading(true);
+             try {
+                const res = await fetch(`/api/quickbooks/dashboard?startDate=${format(startDate!, 'yyyy-MM-dd')}&endDate=${format(endDate!, 'yyyy-MM-dd')}`);
+                 if (res.status === 404) {
+                     setIsConnected(false);
+                     setData(null);
+                     return;
+                 }
+                 if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.details || errorData.error || 'Failed to check connection status.');
+                 }
+                 const dashboardData = await res.json();
+                 setData(dashboardData);
+                 setIsConnected(true);
+             } catch (e: any) {
+                 if (e.message.includes('QuickBooks not connected')) {
+                     setIsConnected(false);
+                     setData(null);
+                 } else {
+                     setError(e.message);
+                 }
+             } finally {
+                 setLoading(false);
+             }
         };
-    });
+        checkConnection();
+    }
+  }, [searchParams, fetchDashboardData, startDate, endDate]);
 
-    const customers = data.customers?.QueryResponse?.Customer || [];
-    const vendors = data.vendors?.QueryResponse?.Vendor || [];
+  return (
+    <>
+      <section className="bg-secondary">
+        <div className="container mx-auto text-center">
+          <h1 className="text-4xl md:text-5xl font-headline font-bold">Client Portal</h1>
+          <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            View your QuickBooks financial data at a glance.
+          </p>
+        </div>
+      </section>
 
-    return {
-        kpis: {
-            totalIncome,
-            totalExpenses,
-            netIncome,
-            grossProfit,
-            totalAssets,
-            totalLiabilities,
-            totalEquity,
-            currentAssets,
-            cash,
-            netCashFromOps,
-            totalOpenInvoices,
-            totalOpenBills,
-            totalCustomers: customers.length,
-        },
-        reports: {
-            pnlRows: pnlRows,
-            balanceSheetRows: balanceRows,
-            cashFlowRows: cashflowRows,
-        },
-        charts: {
-            pnlChartData: [{
-                name: 'P&L',
-                'Income': totalIncome,
-                'Expenses': totalExpenses,
-            }],
-            assetBreakdown,
-            monthlyData,
-        },
-        lists: {
-            invoices,
-            customers,
-            vendors,
-            bills,
-        }
-    };
+      <section className="container mx-auto">
+        {loading && !data && <PageSkeleton />}
+
+        {!loading && !isConnected && (
+            <div className="flex flex-col items-center gap-8">
+            {error && <Alert variant="destructive" className="max-w-2xl"><AlertTitle>Connection Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
+            
+            <Card className="max-w-md mx-auto w-full">
+                <CardHeader className="text-center">
+                <CardTitle>Connect to QuickBooks</CardTitle>
+                <CardDescription>
+                    To view your financial dashboard, you need to connect your QuickBooks Online account.
+                </CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                <Button asChild>
+                    <a href="/api/auth/connect">Connect to QuickBooks</a>
+                </Button>
+                </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {isConnected && (
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Report Filters</CardTitle>
+                        <CardDescription>Select a date range to view your financial reports.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col md:flex-row items-center gap-4">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !startDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={startDate}
+                                onSelect={setStartDate}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                         <Popover>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !endDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={endDate}
+                                onSelect={setEndDate}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <Button onClick={fetchDashboardData} disabled={loading}>
+                            {loading ? 'Loading...' : 'Run Report'}
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                {error && <Alert variant="destructive" className="max-w-2xl mx-auto"><AlertTitle>Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
+
+                {loading ? <PageSkeleton /> : data ? <ClientDashboard data={data} /> : (
+                    <div className="text-center p-8 border rounded-lg">
+                        <p>No data to display for the selected period.</p>
+                    </div>
+                )}
+            </div>
+        )}
+      </section>
+    </>
+  );
+}
+
+export default function ClientsPage() {
+    return (
+        <Suspense fallback={<PageSkeleton />}>
+            <ClientPageContent />
+        </Suspense>
+    );
 }

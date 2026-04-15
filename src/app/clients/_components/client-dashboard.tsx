@@ -92,7 +92,7 @@ const ReportTable = ({ title, data }: { title: string; data: ReportData }) => {
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="relative max-h-[600px] overflow-auto">
             <Table>
             <TableHeader>
                 <TableRow>

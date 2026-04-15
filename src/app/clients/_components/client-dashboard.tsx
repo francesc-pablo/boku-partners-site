@@ -84,7 +84,8 @@ const ReportTable = ({ data }: { data: ReportData }) => {
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="relative max-h-[600px] overflow-auto">
+        <div className="relative overflow-x-auto">
+          <div className="max-h-[600px] overflow-y-auto">
             <Table>
             <TableHeader>
                 <TableRow>
@@ -99,6 +100,7 @@ const ReportTable = ({ data }: { data: ReportData }) => {
                 ))}
             </TableBody>
             </Table>
+            </div>
         </div>
       </CardContent>
     </Card>

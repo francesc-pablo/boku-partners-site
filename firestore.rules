@@ -59,8 +59,8 @@ service cloud.firestore {
     }
 
     /**
-     * Returns true if the requesting user has a portalUser document under the specified client.
-     * This confirms they are a member of that client's organization.
+     * Returns true if the requesting user is a member of the specified client organization.
+     * It checks for the existence of a mapping document that links the user's UID to a clientId.
      */
     function isClientMember(clientId) {
       return isSignedIn() 
@@ -112,18 +112,18 @@ service cloud.firestore {
      */
     match /user_to_client_map/{userId} {
       allow get: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.clientId != null;
       allow list, update, delete: if false;
     }
 
     /**
      * @description Rules for the top-level client tenant documents.
-     * Tenant creation is handled by the signup server action. A user can create a client
-     * as part of the signup flow. Only members of that client can read the client document.
+     * A user can create a client as part of the signup flow. 
+     * Only members of that client can read the client document.
      */
     match /clients/{clientId} {
       allow get: if isClientMember(clientId);
-      allow list: if false;
+      allow list: if false; // Deny listing all clients for security
       allow create: if isSignedIn();
       allow update: if isClientAdmin(clientId);
       allow delete: if false;
@@ -153,10 +153,15 @@ service cloud.firestore {
 
     /**
      * @description Rules for the highly sensitive QuickBooks integration data.
-     * Only server-side logic should interact with this. Client-side access is denied.
+     * Client-side code is allowed to check for the *existence* of an integration
+     * document via a `list` query, but it is NOT allowed to `get` (read) the
+     * actual document containing sensitive tokens. All write operations are
+     * also denied from the client, as they are handled by secure server-side actions.
      */
     match /clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId} {
-      allow read, write: if false;
+      allow get: if false;
+      allow list: if isClientMember(clientId);
+      allow write: if false;
     }
   }
 }

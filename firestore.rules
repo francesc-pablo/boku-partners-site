@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Deny all client-side reads and writes to the oauth_states collection.
+    // Only our server-side code should touch this.
+    match /oauth_states/{stateId} {
+      allow read, write: if false;
+    }
+
+    // Deny all client-side reads and writes to the quickbooks_tokens collection.
+    // This is critical for protecting sensitive credentials.
+    match /quickbooks_tokens/{tokenId} {
+      allow read, write: if false;
+    }
+  }
+}

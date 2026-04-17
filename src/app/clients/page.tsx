@@ -1,12 +1,11 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { ClientDashboard } from './_components/client-dashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useEffect, useState, Suspense, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -16,18 +15,25 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { usePortalUser } from '@/hooks/use-portal-user';
 import { collection, query, limit } from 'firebase/firestore';
 import { getDashboardData } from './actions';
+import { Button } from '@/components/ui/button';
 
 
 function PageSkeleton() {
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                 <Skeleton className="h-10" />
-                 <Skeleton className="h-10" />
-                 <Skeleton className="h-10" />
-            </div>
-            <Skeleton className="h-96" />
-            <Skeleton className="h-96" />
+             <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-1/4" />
+                    <Skeleton className="h-4 w-2/4" />
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <Skeleton className="h-10 w-[280px]" />
+                        <Skeleton className="h-10 w-[280px]" />
+                        <Skeleton className="h-10 w-32" />
+                    </div>
+                </CardContent>
+            </Card>
             <Skeleton className="h-96" />
         </div>
     );
@@ -40,13 +46,12 @@ function ClientPageContent() {
   const [success, setSuccess] = useState<string | null>(null);
   
   const searchParams = useSearchParams();
-  const router = useRouter();
   const firestore = useFirestore();
 
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const { portalUser, isLoading: isPortalUserLoading } = usePortalUser(user?.uid);
   
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 6, 1));
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date(new Date().getFullYear(), 0, 1));
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   
   // Fetch the QuickBooks integration details for the current client
@@ -78,13 +83,6 @@ function ClientPageContent() {
   }, [startDate, endDate, portalUser?.clientId]);
 
   useEffect(() => {
-    // Handle auth loading and redirection
-    if (!isUserLoading && !user) {
-      router.push('/login');
-      return;
-    }
-
-    // Handle QB connection callbacks
     const qbError = searchParams.get('error');
     const qbErrorDetails = searchParams.get('details');
     const qbSuccess = searchParams.get('success');
@@ -97,7 +95,7 @@ function ClientPageContent() {
       setSuccess('Successfully connected to QuickBooks! Fetching your data...');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [isUserLoading, user, router, searchParams]);
+  }, [searchParams]);
 
   useEffect(() => {
     // Auto-fetch data once connection status is confirmed
@@ -106,7 +104,7 @@ function ClientPageContent() {
     }
   }, [isConnected, data, fetchDashboardData]);
 
-  const pageLoading = isUserLoading || isPortalUserLoading || isQbLoading;
+  const pageLoading = isPortalUserLoading || isQbLoading;
 
   if (pageLoading) {
     return <PageSkeleton />;
@@ -114,20 +112,8 @@ function ClientPageContent() {
 
   return (
     <>
-      <section className="bg-secondary">
-        <div className="container mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-headline font-bold">Client Portal</h1>
-          <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            View your QuickBooks financial data at a glance.
-          </p>
-        </div>
-      </section>
-
-      <section className="container mx-auto">
-        {pageLoading && <PageSkeleton />}
-
-        {!pageLoading && !isConnected && (
-            <div className="flex flex-col items-center gap-8">
+        {!isConnected && (
+            <div className="flex flex-col items-center justify-center gap-8 text-center h-[60vh]">
             {error && <Alert variant="destructive" className="max-w-2xl"><AlertTitle>Connection Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
             
             <Card className="max-w-md mx-auto w-full">
@@ -148,6 +134,12 @@ function ClientPageContent() {
 
         {isConnected && (
             <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold">Dashboard</h1>
+                        <p className="text-muted-foreground">View your QuickBooks financial data at a glance.</p>
+                    </div>
+                </div>
                 <Card>
                     <CardHeader>
                         <CardTitle>Report Filters</CardTitle>
@@ -204,6 +196,7 @@ function ClientPageContent() {
                     </CardContent>
                 </Card>
 
+                {success && <Alert><AlertTitle>Success!</AlertTitle><AlertDescription>{success}</AlertDescription></Alert>}
                 {error && <Alert variant="destructive" className="max-w-2xl mx-auto"><AlertTitle>Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
 
                 {loading ? <PageSkeleton /> : data ? <ClientDashboard data={data} /> : (
@@ -213,7 +206,6 @@ function ClientPageContent() {
                 )}
             </div>
         )}
-      </section>
     </>
   );
 }

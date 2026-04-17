@@ -167,7 +167,10 @@ service cloud.firestore {
     match /clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId} {
       allow get: if false;
       allow list: if isClientMember(clientId);
-      allow write: if false;
+      // Allow the server-side callback to create the document.
+      // Deny all other writes from the client.
+      allow create: if true;
+      allow update, delete: if false;
     }
   }
 }

@@ -60,12 +60,11 @@ service cloud.firestore {
 
     /**
      * Returns true if the requesting user is a member of the specified client organization.
-     * It checks for the existence of a mapping document that links the user's UID to a clientId.
+     * It checks for the existence of their user document within that client's subcollection.
      */
     function isClientMember(clientId) {
       return isSignedIn() 
-        && exists(/databases/$(database)/documents/user_to_client_map/$(request.auth.uid))
-        && get(/databases/$(database)/documents/user_to_client_map/$(request.auth.uid)).data.clientId == clientId;
+        && exists(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid));
     }
 
     /**
@@ -153,8 +152,7 @@ service cloud.firestore {
      * be opened up. In a production app using the Admin SDK, these would be locked down.
      */
     match /oauth_states/{stateId} {
-      allow get, list, create, delete: if true;
-      allow update: if false;
+      allow read, write: if true;
     }
 
     /**

@@ -2,8 +2,7 @@
 
 import { NextResponse } from 'next/server';
 import axios from 'axios';
-import { collection, query, where, getDocs, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { getSdks } from '@/firebase';
+import { collection, query, where, getDocs, deleteDoc, addDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 
@@ -11,7 +10,7 @@ import { firebaseConfig } from '@/firebase/config';
 if (!getApps().length) {
   initializeApp(firebaseConfig);
 }
-const { firestore } = getSdks();
+const firestore = getFirestore();
 
 export async function GET(req: Request) {
   const { searchParams, origin } = new URL(req.url);

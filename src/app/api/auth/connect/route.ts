@@ -2,8 +2,7 @@
 
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { getSdks } from '@/firebase';
+import { collection, addDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 
@@ -12,7 +11,7 @@ if (!getApps().length) {
   initializeApp(firebaseConfig);
 }
 
-const { firestore } = getSdks();
+const firestore = getFirestore();
 
 
 export async function GET(req: Request) {

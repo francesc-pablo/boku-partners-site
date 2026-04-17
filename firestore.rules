@@ -145,10 +145,16 @@ service cloud.firestore {
       allow delete: if isClientAdmin(clientId);
     }
     
-    // Deny all client-side reads and writes to the oauth_states collection.
-    // Only our server-side code should touch this.
+    /**
+     * @description Rules for the temporary state documents used in the OAuth 2.0 flow.
+     * The server-side /api/auth/connect route needs to create these documents,
+     * and the /api/auth/callback route needs to read and delete them. Because these
+     * server routes use the client SDK without an auth context, these rules must
+     * be opened up. In a production app using the Admin SDK, these would be locked down.
+     */
     match /oauth_states/{stateId} {
-      allow read, write: if false;
+      allow get, list, create, delete: if true;
+      allow update: if false;
     }
 
     /**

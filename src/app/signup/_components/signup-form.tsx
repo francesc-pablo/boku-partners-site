@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormStatus } from 'react-dom';
-import { useActionState, useEffect, useRef } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
 
 const initialState = {
   message: '',
@@ -29,25 +30,37 @@ function SubmitButton() {
 export function SignUpForm() {
   const [state, formAction] = useActionState(signup, initialState);
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
+  const { user, isUserLoading } = useUser();
 
+  // Redirect if user is logged in
   useEffect(() => {
-    if (!state.message) return;
-
-    if (state.message === 'success') {
+    if (!isUserLoading && user) {
       router.push('/clients');
-    } else {
+    }
+  }, [user, isUserLoading, router]);
+
+  // Handle form submission errors
+  useEffect(() => {
+    if (state.message && state.message !== 'success') {
       toast({
         title: 'Error',
         description: state.message,
         variant: 'destructive',
       });
     }
-  }, [state, toast, router]);
+  }, [state, toast]);
+
+  if (isUserLoading || user) {
+    return (
+        <div className="flex justify-center items-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
+  }
 
   return (
-    <form ref={formRef} action={formAction}>
+    <form action={formAction}>
       <Card>
         <CardHeader>
           <CardTitle>Sign Up</CardTitle>

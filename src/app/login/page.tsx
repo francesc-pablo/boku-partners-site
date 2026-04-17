@@ -1,6 +1,32 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
+import { Loader2 } from 'lucide-react';
 import { LoginForm } from './_components/login-form';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { user, isUserLoading } = useUser();
+
+  useEffect(() => {
+    // If the user is authenticated (and no longer loading), redirect them to the clients page.
+    if (!isUserLoading && user) {
+      router.push('/clients');
+    }
+  }, [user, isUserLoading, router]);
+
+  // Show a loading spinner while checking for user authentication state or during redirection.
+  if (isUserLoading || user) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // If no user is found after checking, show the login form.
   return (
     <>
       <section className="bg-secondary">

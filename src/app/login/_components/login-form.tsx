@@ -9,8 +9,6 @@ import { login } from '@/app/(auth)/actions';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
 import { useFormStatus } from 'react-dom';
 
 const initialState = {
@@ -30,8 +28,6 @@ function SubmitButton() {
 export function LoginForm() {
   const [state, formAction] = useActionState(login, initialState);
   const { toast } = useToast();
-  const router = useRouter();
-  const { user, isUserLoading } = useUser();
 
   // Handle form submission errors
   useEffect(() => {
@@ -44,20 +40,8 @@ export function LoginForm() {
     }
   }, [state, toast]);
 
-  // Redirect if user is logged in
-  useEffect(() => {
-    if (!isUserLoading && user) {
-      router.push('/clients');
-    }
-  }, [user, isUserLoading, router]);
-
-  if (isUserLoading || user) {
-    return (
-        <div className="flex justify-center items-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-    );
-  }
+  // This component no longer handles redirection. It only renders the form UI.
+  // The parent page component (`/login/page.tsx`) is now responsible for redirection.
 
   return (
     <form action={formAction}>

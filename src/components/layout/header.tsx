@@ -73,11 +73,6 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-              {!isUserLoading && !user && (
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/login">Login</Link>
-                </Button>
-              )}
                {!isUserLoading && user && (
                 <form action={logout}>
                   <Button type="submit" variant="outline" size="sm">Logout</Button>

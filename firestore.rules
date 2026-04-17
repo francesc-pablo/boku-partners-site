@@ -149,7 +149,7 @@ service cloud.firestore {
      * The server-side /api/auth/connect route needs to create these documents,
      * and the /api/auth/callback route needs to read and delete them. Because these
      * server routes use the client SDK without an auth context, these rules must
-     * be opened up. In a production app using the Admin SDK, these would be locked down.
+     * be opened up.
      */
     match /oauth_states/{stateId} {
       allow read, write: if true;
@@ -157,16 +157,15 @@ service cloud.firestore {
 
     /**
      * @description Rules for the highly sensitive QuickBooks integration data.
-     * Client-side code is allowed to check for the *existence* of an integration
-     * document via a `list` query, but it is NOT allowed to `get` (read) the
-     * actual document containing sensitive tokens. All write operations are
-     * also denied from the client, as they are handled by secure server-side actions.
+     * The `get` and `list` permissions are opened up to allow unauthenticated server-side
+     * processes (like Next.js Server Actions) to retrieve tokens for making API calls.
+     * In a production environment with a more robust backend (e.g., using the Admin SDK),
+     * these rules should be locked down significantly. Client-side updates and deletes
+     * are disabled to prevent tampering with tokens.
      */
     match /clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId} {
-      allow get: if false;
-      allow list: if isClientMember(clientId);
-      // Allow the server-side callback to create the document.
-      // Deny all other writes from the client.
+      allow get: if true;
+      allow list: if true;
       allow create: if true;
       allow update, delete: if false;
     }

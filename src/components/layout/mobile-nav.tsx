@@ -15,8 +15,7 @@ import {
 } from '@/components/ui/accordion';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { services } from '@/lib/services';
-import { useUser } from '@/firebase';
-import { logout } from '@/app/(auth)/actions';
+import { useUser, useAuth } from '@/firebase';
 
 
 type NavLink = {
@@ -32,6 +31,12 @@ export function MobileNav({ navLinks }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    setOpen(false);
+  };
 
 
   return (
@@ -111,9 +116,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
         
         <div className="mt-auto p-6 border-t">
             {!isUserLoading && user && (
-            <form action={logout}>
-              <Button type="submit" variant="outline" className="w-full" onClick={() => setOpen(false)}>Logout</Button>
-            </form>
+            <Button onClick={handleLogout} variant="outline" className="w-full">Logout</Button>
           )}
         </div>
       </SheetContent>

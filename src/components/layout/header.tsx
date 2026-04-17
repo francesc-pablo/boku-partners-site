@@ -6,9 +6,8 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { MobileNav } from './mobile-nav';
 import { useState, useEffect, useRef } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { Button } from '../ui/button';
-import { logout } from '@/app/(auth)/actions';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -21,6 +20,7 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
   const headerHeight = 80; // h-20 is 5rem which is 80px
@@ -42,6 +42,10 @@ export function Header() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  const handleLogout = async () => {
+    await auth.signOut();
+  };
 
   return (
     <header
@@ -74,9 +78,7 @@ export function Header() {
                 </Link>
               ))}
                {!isUserLoading && user && (
-                <form action={logout}>
-                  <Button type="submit" variant="outline" size="sm">Logout</Button>
-                </form>
+                <Button onClick={handleLogout} variant="outline" size="sm">Logout</Button>
               )}
             </nav>
             <div className="md:hidden pr-7">

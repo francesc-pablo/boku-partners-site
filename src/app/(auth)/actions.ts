@@ -6,7 +6,7 @@ import { firebaseConfig } from '@/firebase/config';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 
 // This file is now only for server-side actions that don't directly manipulate auth state,
-// like password reset and logout.
+// like password reset.
 
 // Initialize on the server for these actions
 if (!getApps().length) {
@@ -23,10 +23,4 @@ export async function resetPassword(prevState: { message: string, success: boole
   } catch (e: any) {
      return { message: e.message, success: false };
   }
-}
-
-export async function logout() {
-    // This server action signs the user out and redirects to the login page.
-    await auth.signOut();
-    redirect('/login');
 }

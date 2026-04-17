@@ -6,12 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useEffect, useState, Suspense, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { usePortalUser } from '@/hooks/use-portal-user';
+import { collection, query, limit } from 'firebase/firestore';
+import { getDashboardData } from './actions';
+
 
 function PageSkeleton() {
     return (
@@ -29,51 +34,57 @@ function PageSkeleton() {
 }
 
 function ClientPageContent() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const firestore = useFirestore();
 
+  const { user, isUserLoading } = useUser();
+  const { portalUser, isLoading: isPortalUserLoading } = usePortalUser(user?.uid);
+  
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 6, 1));
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   
-  const [isConnected, setIsConnected] = useState(false);
+  // Fetch the QuickBooks integration details for the current client
+  const qbIntegrationQuery = useMemoFirebase(() => {
+    if (!firestore || !portalUser?.clientId) return null;
+    return query(collection(firestore, 'clients', portalUser.clientId, 'quickBooksIntegration'), limit(1));
+  }, [firestore, portalUser?.clientId]);
 
+  const { data: qbIntegration, isLoading: isQbLoading } = useCollection(qbIntegrationQuery);
+  const isConnected = qbIntegration ? qbIntegration.length > 0 : false;
+  
   const fetchDashboardData = useCallback(async () => {
-    if (!startDate || !endDate) return;
+    if (!startDate || !endDate || !portalUser?.clientId) return;
 
     setLoading(true);
     setError(null);
-
-    const start = format(startDate, 'yyyy-MM-dd');
-    const end = format(endDate, 'yyyy-MM-dd');
-
     try {
-      const res = await fetch(`/api/quickbooks/dashboard?startDate=${start}&endDate=${end}`);
-      
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.details || errorData.error || 'Failed to fetch data.');
-      }
-      
-      const dashboardData = await res.json();
+      const dashboardData = await getDashboardData({
+          clientId: portalUser.clientId,
+          startDate: format(startDate, 'yyyy-MM-dd'),
+          endDate: format(endDate, 'yyyy-MM-dd')
+      });
       setData(dashboardData);
-      setIsConnected(true);
     } catch (e: any) {
-      if (e.message.includes('QuickBooks not connected')) {
-          setIsConnected(false);
-          setData(null);
-      } else {
-          setError(e.message);
-      }
+        setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, portalUser?.clientId]);
 
   useEffect(() => {
+    // Handle auth loading and redirection
+    if (!isUserLoading && !user) {
+      router.push('/login');
+      return;
+    }
+
+    // Handle QB connection callbacks
     const qbError = searchParams.get('error');
     const qbErrorDetails = searchParams.get('details');
     const qbSuccess = searchParams.get('success');
@@ -85,39 +96,21 @@ function ClientPageContent() {
     if (qbSuccess) {
       setSuccess('Successfully connected to QuickBooks! Fetching your data...');
       window.history.replaceState({}, document.title, window.location.pathname);
-      fetchDashboardData();
-    } else {
-        // Initial check to see if we are already connected
-        const checkConnection = async () => {
-             setLoading(true);
-             try {
-                const res = await fetch(`/api/quickbooks/dashboard?startDate=${format(startDate!, 'yyyy-MM-dd')}&endDate=${format(endDate!, 'yyyy-MM-dd')}`);
-                 if (res.status === 404) {
-                     setIsConnected(false);
-                     setData(null);
-                     return;
-                 }
-                 if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(errorData.details || errorData.error || 'Failed to check connection status.');
-                 }
-                 const dashboardData = await res.json();
-                 setData(dashboardData);
-                 setIsConnected(true);
-             } catch (e: any) {
-                 if (e.message.includes('QuickBooks not connected')) {
-                     setIsConnected(false);
-                     setData(null);
-                 } else {
-                     setError(e.message);
-                 }
-             } finally {
-                 setLoading(false);
-             }
-        };
-        checkConnection();
     }
-  }, [searchParams, fetchDashboardData, startDate, endDate]);
+  }, [isUserLoading, user, router, searchParams]);
+
+  useEffect(() => {
+    // Auto-fetch data once connection status is confirmed
+    if (isConnected && !data) {
+        fetchDashboardData();
+    }
+  }, [isConnected, data, fetchDashboardData]);
+
+  const pageLoading = isUserLoading || isPortalUserLoading || isQbLoading;
+
+  if (pageLoading) {
+    return <PageSkeleton />;
+  }
 
   return (
     <>
@@ -131,9 +124,9 @@ function ClientPageContent() {
       </section>
 
       <section className="container mx-auto">
-        {loading && !data && <PageSkeleton />}
+        {pageLoading && <PageSkeleton />}
 
-        {!loading && !isConnected && (
+        {!pageLoading && !isConnected && (
             <div className="flex flex-col items-center gap-8">
             {error && <Alert variant="destructive" className="max-w-2xl"><AlertTitle>Connection Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
             
@@ -146,7 +139,7 @@ function ClientPageContent() {
                 </CardHeader>
                 <CardContent className="flex justify-center">
                 <Button asChild>
-                    <a href="/api/auth/connect">Connect to QuickBooks</a>
+                    <a href={`/api/auth/connect?clientId=${portalUser?.clientId}`}>Connect to QuickBooks</a>
                 </Button>
                 </CardContent>
             </Card>
@@ -206,7 +199,7 @@ function ClientPageContent() {
                             </PopoverContent>
                         </Popover>
                         <Button onClick={fetchDashboardData} disabled={loading}>
-                            {loading ? 'Loading...' : 'Run Report'}
+                            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</> : 'Run Report'}
                         </Button>
                     </CardContent>
                 </Card>
@@ -215,7 +208,7 @@ function ClientPageContent() {
 
                 {loading ? <PageSkeleton /> : data ? <ClientDashboard data={data} /> : (
                     <div className="text-center p-8 border rounded-lg">
-                        <p>No data to display for the selected period.</p>
+                        <p>No data to display for the selected period. Run a report to see your data.</p>
                     </div>
                 )}
             </div>

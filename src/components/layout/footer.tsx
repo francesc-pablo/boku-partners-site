@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useUser } from '@/firebase';
+import { usePortalUser } from '@/hooks/use-portal-user';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -30,6 +32,10 @@ const services = [
 ];
 
 export function Footer() {
+  const { user } = useUser();
+  const { portalUser } = usePortalUser(user?.uid);
+  const isAdmin = portalUser?.role === 'Admin';
+
 
   return (
     <footer className="bg-secondary">
@@ -46,6 +52,13 @@ export function Footer() {
                     </Link>
                   </li>
                 ))}
+                 {isAdmin && (
+                  <li>
+                    <Link href="/admin/users" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                      User Management
+                    </Link>
+                  </li>
+                )}
               </ul>
             </div>
           </div>

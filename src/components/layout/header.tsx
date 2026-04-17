@@ -6,6 +6,9 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { MobileNav } from './mobile-nav';
 import { useState, useEffect, useRef } from 'react';
+import { useUser } from '@/firebase';
+import { Button } from '../ui/button';
+import { logout } from '@/app/(auth)/actions';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -17,6 +20,7 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const { user, isUserLoading } = useUser();
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
   const headerHeight = 80; // h-20 is 5rem which is 80px
@@ -69,6 +73,16 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+              {!isUserLoading && !user && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/login">Login</Link>
+                </Button>
+              )}
+               {!isUserLoading && user && (
+                <form action={logout}>
+                  <Button type="submit" variant="outline" size="sm">Logout</Button>
+                </form>
+              )}
             </nav>
             <div className="md:hidden pr-7">
               <MobileNav navLinks={navLinks} />

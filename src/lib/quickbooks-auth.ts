@@ -1,25 +1,41 @@
 'use server';
 
 import axios from 'axios';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDocs, setDoc, collection, query, orderBy, limit, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { getSdks } from '@/firebase';
+import { initializeApp, getApps } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
 
-export async function getValidAccessToken() {
-  const tokenRef = doc(db, "quickbooks_tokens", "singleton_token");
-  const tokenSnap = await getDoc(tokenRef);
+// Ensure Firebase is initialized for server-side use
+if (!getApps().length) {
+  initializeApp(firebaseConfig);
+}
+const { firestore } = getSdks();
 
-  if (!tokenSnap.exists()) {
-      throw new Error('QuickBooks not connected.');
+export async function getValidAccessToken(clientId: string) {
+  if (!clientId) {
+      throw new Error('Client ID is required to get QuickBooks access token.');
   }
 
-  let tokenData = tokenSnap.data();
+  const integrationCollectionRef = collection(firestore, 'clients', clientId, 'quickBooksIntegration');
+  // Get the most recently created integration document.
+  const q = query(integrationCollectionRef, orderBy('connectedAt', 'desc'), limit(1));
+  const snapshot = await getDocs(q);
 
-  // If access token is still valid, return it
-  if (Date.now() < tokenData.accessTokenExpiresAt) {
+  if (snapshot.empty) {
+      throw new Error('QuickBooks not connected for this client.');
+  }
+  
+  const tokenDoc = snapshot.docs[0];
+  let tokenData = tokenDoc.data();
+  
+  // Timestamps might be Firestore Timestamp objects, so we convert them to JS Dates
+  const accessTokenExpiresAt = tokenData.accessTokenExpiresAt.toDate ? tokenData.accessTokenExpiresAt.toDate() : new Date(tokenData.accessTokenExpiresAt);
+  
+  if (Date.now() < accessTokenExpiresAt.getTime()) {
     return { accessToken: tokenData.accessToken, realmId: tokenData.realmId };
   }
   
-  // If access token is expired, refresh it
   console.log('QuickBooks access token expired, refreshing...');
   try {
     const res = await axios.post(
@@ -33,7 +49,7 @@ export async function getValidAccessToken() {
           Authorization:
             'Basic ' +
             Buffer.from(
-              `${process.env.QB_CLIENT_ID}:${process.env.QB_CLIENT_SECRET}`
+              `${process.env.NEXT_PUBLIC_QB_CLIENT_ID}:${process.env.NEXT_PUBLIC_QB_CLIENT_SECRET}`
             ).toString('base64'),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -43,21 +59,20 @@ export async function getValidAccessToken() {
     const { access_token, refresh_token, expires_in, x_refresh_token_expires_in } = res.data;
     
     const newTokenData = {
-        ...tokenData,
         accessToken: access_token,
         refreshToken: refresh_token,
-        accessTokenExpiresAt: Date.now() + expires_in * 1000,
-        refreshTokenExpiresAt: Date.now() + x_refresh_token_expires_in * 1000,
+        accessTokenExpiresAt: new Date(Date.now() + expires_in * 1000),
+        refreshTokenExpiresAt: new Date(Date.now() + x_refresh_token_expires_in * 1000),
+        updatedAt: serverTimestamp()
     };
 
-    await setDoc(tokenRef, newTokenData);
+    await updateDoc(tokenDoc.ref, newTokenData);
 
     console.log('QuickBooks token refreshed successfully.');
-    return { accessToken: newTokenData.accessToken, realmId: newTokenData.realmId };
+    return { accessToken: newTokenData.accessToken, realmId: tokenData.realmId };
 
   } catch (error: any) {
     console.error("Failed to refresh QuickBooks token:", error.response?.data || error.message);
-    // If refresh fails, it's a critical error. The user may need to reconnect.
     throw new Error('Failed to refresh QuickBooks token. Please try reconnecting.');
   }
 }

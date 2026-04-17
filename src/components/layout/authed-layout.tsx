@@ -1,16 +1,32 @@
 'use client';
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useUser, useAuth } from '@/firebase';
 import { usePortalUser } from '@/hooks/use-portal-user';
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect } from "react";
-import { LayoutDashboard, Users, LogOut, Loader2 } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+function SidebarFooterWithToggle() {
+    const { state, toggleSidebar } = useSidebar();
+    const isExpanded = state === 'expanded';
+
+    return (
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton onClick={toggleSidebar} tooltip={isExpanded ? "Collapse sidebar" : "Expand sidebar"}>
+                    {isExpanded ? <PanelLeftClose /> : <PanelLeftOpen />}
+                    <span>{isExpanded ? "Collapse" : "Expand"}</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
+    );
+}
 
 export function AuthedLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -61,7 +77,7 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <SidebarProvider>
-            <Sidebar>
+            <Sidebar collapsible="icon">
                 <SidebarHeader>
                     <Logo />
                 </SidebarHeader>
@@ -82,14 +98,7 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenu>
                 </SidebarContent>
                 <SidebarFooter>
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
-                                <LogOut />
-                                <span>Logout</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
+                   <SidebarFooterWithToggle />
                 </SidebarFooter>
             </Sidebar>
             <SidebarInset>

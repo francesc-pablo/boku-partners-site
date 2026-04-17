@@ -1,8 +1,6 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
 import { getApps, initializeApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
@@ -59,6 +57,13 @@ export async function signup(prevState: { message: string }, formData: FormData)
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     });
+    
+    // Add user to the client lookup map
+    const userClientMapRef = doc(db, 'user_to_client_map', user.uid);
+    await setDoc(userClientMapRef, {
+        clientId: clientRef.id
+    });
+
 
   } catch (e: any) {
     if (e.code === 'auth/email-already-in-use') {

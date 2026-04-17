@@ -19,10 +19,10 @@ export async function login(prevState: { message: string }, formData: FormData) 
 
   try {
     await signInWithEmailAndPassword(auth, email, password);
+    return { message: 'success' };
   } catch (e: any) {
     return { message: e.message };
   }
-  return redirect('/clients');
 }
 
 export async function signup(prevState: { message: string }, formData: FormData) {
@@ -64,15 +64,13 @@ export async function signup(prevState: { message: string }, formData: FormData)
         clientId: clientRef.id
     });
 
-
+    return { message: 'success' };
   } catch (e: any) {
     if (e.code === 'auth/email-already-in-use') {
         return { message: 'This email address is already in use.' };
     }
     return { message: `An error occurred: ${e.message}` };
   }
-
-  return redirect('/clients');
 }
 
 

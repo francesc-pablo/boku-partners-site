@@ -10,6 +10,7 @@ import { signup } from '@/app/(auth)/actions';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
 
 const initialState = {
   message: '',
@@ -29,16 +30,21 @@ export function SignUpForm() {
   const [state, formAction] = useActionState(signup, initialState);
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    if (state?.message) {
+    if (!state.message) return;
+
+    if (state.message === 'success') {
+      router.push('/clients');
+    } else {
       toast({
         title: 'Error',
         description: state.message,
         variant: 'destructive',
       });
     }
-  }, [state, toast]);
+  }, [state, toast, router]);
 
   return (
     <form ref={formRef} action={formAction}>

@@ -1,6 +1,5 @@
 'use client';
 
-import { useFormStatus } from 'react-dom';
 import { useActionState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,8 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
+import { useFormStatus } from 'react-dom';
+
 
 const initialState = {
   message: '',
@@ -33,13 +34,6 @@ export function SignUpForm() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
 
-  // Redirect if user is logged in
-  useEffect(() => {
-    if (!isUserLoading && user) {
-      router.push('/clients');
-    }
-  }, [user, isUserLoading, router]);
-
   // Handle form submission errors
   useEffect(() => {
     if (state.message && state.message !== 'success') {
@@ -50,6 +44,13 @@ export function SignUpForm() {
       });
     }
   }, [state, toast]);
+
+  // Redirect if user is logged in
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/clients');
+    }
+  }, [user, isUserLoading, router]);
 
   if (isUserLoading || user) {
     return (

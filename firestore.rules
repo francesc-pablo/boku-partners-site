@@ -1,16 +1,163 @@
+/**
+ * This ruleset implements a secure, multi-tenant model for a client portal.
+ *
+ * Core Philosophy:
+ * The security model is built on strict data partitioning by a top-level client ID (`clientId`).
+ * All data for a specific client is nested under `/clients/{clientId}`, ensuring that users
+ * from one client can never access data from another. Within each client's data partition,
+ * a Role-Based Access Control (RBAC) system is used, primarily distinguishing between
+ * 'Admin' and standard users.
+ *
+ * Data Structure:
+ * - /clients/{clientId}: The root document for a single client tenant.
+ * - /clients/{clientId}/portalUsers/{portalUserId}: A subcollection containing user profiles for that client.
+ * - /clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId}: A subcollection for sensitive integration data.
+ *
+ * Key Security Decisions:
+ * - Strict Tenant Isolation: All rules verify that the requesting user belongs to the `clientId`
+ *   specified in the document path, preventing any cross-tenant data access.
+ * - Admin-Based Management: Users with the 'Admin' role within a client can manage other users
+ *   and sensitive integration settings for that client only.
+ * - User Self-Service: Users can view and update their own profile information but cannot
+ *   view other users' profiles unless they are an admin.
+ * - Deny by Default: Listing all clients is disallowed, and creation/deletion of top-level
+ *   client documents is restricted, assuming these are backend-controlled operations.
+ * - Denormalization for Authorization: User roles and client IDs are stored directly on
+ *   `portalUser` documents. This allows security rules to determine a user's permissions
+ *   for a given client with a single `get` operation on their own user document, which is
+ *   efficient and secure.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Deny all client-side reads and writes to the oauth_states collection.
-    // Only our server-side code should touch this.
-    match /oauth_states/{stateId} {
-      allow read, write: if false;
+
+    //----------------------------------------------------------------//
+    //                        Helper Functions                        //
+    //----------------------------------------------------------------//
+
+    /**
+     * Returns true if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Deny all client-side reads and writes to the quickbooks_tokens collection.
-    // This is critical for protecting sensitive credentials.
-    match /quickbooks_tokens/{tokenId} {
-      allow read, write: if false;
+    /**
+     * Returns true if the requesting user's UID matches the provided userId.
+     * Used for checking document ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * A reusable function to retrieve the requesting user's own PortalUser document data.
+     * This is the source of truth for their role and clientId.
+     */
+    function getRequestingUserData(clientId) {
+      return get(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid)).data;
+    }
+
+    /**
+     * Returns true if the requesting user has a portalUser document under the specified client.
+     * This confirms they are a member of that client's organization.
+     */
+    function isClientMember(clientId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid));
+    }
+
+    /**
+     * Returns true if the requesting user is an 'Admin' for the specified client.
+     * This implicitly checks for membership as the 'get' will fail if the user document doesn't exist.
+     */
+    function isClientAdmin(clientId) {
+      return isClientMember(clientId) && getRequestingUserData(clientId).role == 'Admin';
+    }
+
+    /**
+     * Validates that the `clientId` and `id` fields in a new portalUser document
+     * match the document's path, ensuring relational integrity.
+     */
+    function isPortalUserDataValidOnCreate(clientId, portalUserId) {
+      return request.resource.data.clientId == clientId && request.resource.data.id == portalUserId;
+    }
+
+    /**
+     * Ensures critical relational IDs on a portalUser document cannot be changed after creation.
+     */
+    function arePortalUserFieldsImmutable() {
+      return request.resource.data.clientId == resource.data.clientId && request.resource.data.id == resource.data.id;
+    }
+
+    /**
+     * Validates that the `clientId` and `id` fields in a new quickBooksIntegration document
+     * match the document's path, ensuring relational integrity.
+     */
+    function isQuickBooksDataValidOnCreate(clientId, quickBooksIntegrationId) {
+      return request.resource.data.clientId == clientId && request.resource.data.id == quickBooksIntegrationId;
+    }
+
+    /**
+     * Ensures critical relational IDs on a quickBooksIntegration document cannot be changed after creation.
+     */
+    function areQuickBooksFieldsImmutable() {
+      return request.resource.data.clientId == resource.data.clientId && request.resource.data.id == resource.data.id;
+    }
+
+
+    //----------------------------------------------------------------//
+    //                         Collection Rules                       //
+    //----------------------------------------------------------------//
+
+    /**
+     * @description Rules for the top-level client tenant documents.
+     * @path /clients/{clientId}
+     * @allow (get) A user authenticated as a member of 'client-abc' can read the document at `/clients/client-abc`.
+     * @deny (get) A user from 'client-xyz' cannot read the document at `/clients/client-abc`.
+     * @deny (list, create, delete) All users are blocked from listing, creating, or deleting client tenants.
+     * @principle Restricts access to a client's own data tree and defers tenant lifecycle management to a backend process.
+     */
+    match /clients/{clientId} {
+      allow get: if isClientMember(clientId);
+      allow list: if false;
+
+      allow create: if false;
+      allow update: if resource != null && isClientAdmin(clientId);
+      allow delete: if false;
+    }
+
+    /**
+     * @description Rules for portal user accounts, which are nested under a specific client.
+     * @path /clients/{clientId}/portalUsers/{portalUserId}
+     * @allow (get) User 'user-123' can read their own profile at `/.../portalUsers/user-123`.
+     * @allow (get, list, update, create, delete) An 'Admin' user for 'client-abc' can manage any user profile within that client's subcollection.
+     * @deny (get) User 'user-123' cannot read the profile of 'user-456' unless they are an Admin.
+     * @deny (list) A non-admin user cannot list all users in their client's portal.
+     * @principle Enforces a combination of document ownership for self-service and role-based admin privileges for user management within a tenant.
+     */
+    match /clients/{clientId}/portalUsers/{portalUserId} {
+      allow get: if isOwner(portalUserId) || isClientAdmin(clientId);
+      allow list: if isClientAdmin(clientId);
+
+      allow create: if isClientAdmin(clientId) && isPortalUserDataValidOnCreate(clientId, portalUserId);
+      allow update: if resource != null && (isOwner(portalUserId) || isClientAdmin(clientId)) && arePortalUserFieldsImmutable();
+      allow delete: if resource != null && isClientAdmin(clientId);
+    }
+
+    /**
+     * @description Rules for the highly sensitive QuickBooks integration data.
+     * @path /clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId}
+     * @allow (get, list, create, update, delete) An 'Admin' user for 'client-abc' can fully manage the integration data for that client.
+     * @deny (get) A standard, non-admin user is blocked from reading any QuickBooks integration data, even for their own client.
+     * @principle Restricts access to sensitive credentials and tokens to authorized 'Admin' personnel only within a specific client tenant.
+     */
+    match /clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId} {
+      allow get: if isClientAdmin(clientId);
+      allow list: if isClientAdmin(clientId);
+
+      allow create: if isClientAdmin(clientId) && isQuickBooksDataValidOnCreate(clientId, quickBooksIntegrationId);
+      allow update: if resource != null && isClientAdmin(clientId) && areQuickBooksFieldsImmutable();
+      allow delete: if resource != null && isClientAdmin(clientId);
     }
   }
 }

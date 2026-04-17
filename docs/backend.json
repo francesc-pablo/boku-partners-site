@@ -1,0 +1,219 @@
+{
+  "entities": {
+    "Client": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Client",
+      "type": "object",
+      "description": "Represents an organization or business that is a client of Boku Partners, which will have access to a dedicated client portal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Client entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official business name of the client organization."
+        },
+        "quickBooksIntegrationId": {
+          "type": "string",
+          "description": "Reference to the QuickBooksIntegration entity, representing this client's connection to QuickBooks. (Relationship: Client 1:1 QuickBooksIntegration)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the client record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the client record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "PortalUser": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PortalUser",
+      "type": "object",
+      "description": "Represents an individual user account within a specific client's portal, allowing access to client-specific data and functionalities.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PortalUser entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used as their login identifier.",
+          "format": "email"
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to the Client entity this user belongs to, enabling multi-tenancy. (Relationship: Client 1:N PortalUser)"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role assigned to the user within their client's portal. 'Admin' users can manage other users for their client, 'StandardUser' for regular access.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the portal user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the portal user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "clientId",
+        "role"
+      ]
+    },
+    "QuickBooksIntegration": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "QuickBooksIntegration",
+      "type": "object",
+      "description": "Stores the authentication tokens and connection details required to integrate with a specific client's QuickBooks Online account.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the QuickBooksIntegration entity."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to the Client entity this QuickBooks integration belongs to. This ensures a unique 1:1 relationship where one client has one QuickBooks connection. (Relationship: QuickBooksIntegration 1:1 Client)"
+        },
+        "accessToken": {
+          "type": "string",
+          "description": "The OAuth 2.0 access token used to make API calls to QuickBooks on behalf of the client."
+        },
+        "refreshToken": {
+          "type": "string",
+          "description": "The OAuth 2.0 refresh token used to obtain new access tokens when the current one expires."
+        },
+        "realmId": {
+          "type": "string",
+          "description": "The QuickBooks company ID (also known as companyId) that this integration connects to."
+        },
+        "accessTokenExpiresAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the current access token will expire.",
+          "format": "date-time"
+        },
+        "refreshTokenExpiresAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the refresh token will expire, requiring a re-authorization by the user.",
+          "format": "date-time"
+        },
+        "scope": {
+          "type": "string",
+          "description": "A space-delimited string indicating the permissions granted by the QuickBooks user (e.g., 'com.intuit.quickbooks.accounting openid profile email')."
+        },
+        "connectedAt": {
+          "type": "string",
+          "description": "Timestamp when the QuickBooks connection was first established or last successfully refreshed.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the QuickBooks integration details were last updated (e.g., after token refresh).",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "accessToken",
+        "refreshToken",
+        "realmId",
+        "accessTokenExpiresAt",
+        "scope",
+        "connectedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/clients/{clientId}",
+        "definition": {
+          "entityName": "Client",
+          "schema": {
+            "$ref": "#/backend/entities/Client"
+          },
+          "description": "Top-level collection representing each client tenant. Documents in this collection hold global information for a specific client. The 'id' field of the Client entity is mapped to the '{clientId}' wildcard. This collection serves as the root for multi-tenant data.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the Client entity, representing a specific tenant."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/clients/{clientId}/portalUsers/{portalUserId}",
+        "definition": {
+          "entityName": "PortalUser",
+          "schema": {
+            "$ref": "#/backend/entities/PortalUser"
+          },
+          "description": "Subcollection storing individual user accounts associated with a specific client. Documents include denormalized 'clientId' and 'role' fields for Authorization Independence. The '{portalUserId}' wildcard corresponds to the 'id' field of the PortalUser entity. An 'Admin' role user for a given 'clientId' can manage other portal users within the same 'clientId'.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier of the parent Client tenant."
+            },
+            {
+              "name": "portalUserId",
+              "description": "Unique identifier for the PortalUser entity, representing an individual user within the client's portal. This should also match the Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId}",
+        "definition": {
+          "entityName": "QuickBooksIntegration",
+          "schema": {
+            "$ref": "#/backend/entities/QuickBooksIntegration"
+          },
+          "description": "Subcollection storing the QuickBooks integration details for a specific client. This maintains a 1:1 relationship with the Client entity. Documents include denormalized 'clientId' for Authorization Independence. The '{quickBooksIntegrationId}' wildcard corresponds to the 'id' field of the QuickBooksIntegration entity. Access to this data is restricted to authorized users (e.g., 'Admin' role) within the corresponding client.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier of the parent Client tenant."
+            },
+            {
+              "name": "quickBooksIntegrationId",
+              "description": "Unique identifier for the QuickBooksIntegration entity, ensuring a specific integration can be addressed."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The proposed Firestore structure is designed to facilitate a secure, scalable, and debuggable multi-tenant client portal with specific role-based access control (DBAC).\n\n**1. Authorization Independence via Denormalization:**\n*   **Client Entity (`/clients/{clientId}`):** This is the root of each tenant's data. Its ID (`clientId`) serves as the primary authorization context for all nested subcollections. No data from a parent document is required to authorize access to `Client` documents themselves, making them atomically accessible.\n*   **PortalUser Entity (`/clients/{clientId}/portalUsers/{portalUserId}`):** Each `PortalUser` document explicitly contains its `clientId` and `role` fields. This is critical for authorization independence. When a user (`request.auth.uid`) attempts to access data, rules can directly check `resource.data.clientId` against the `clientId` in the path, and `resource.data.role` for permissions. While a `get()` operation is still needed to retrieve the *requesting user's own* role (e.g., `get(/clients/$(clientId)/portalUsers/$(request.auth.uid)).data.role`), this is a self-referential check within the same tenant context, not a hierarchical dependency on parent document data. This allows for atomic writes/updates of `PortalUser` documents without breaking security.\n*   **QuickBooksIntegration Entity (`/clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId}`):** Similarly, the `QuickBooksIntegration` document explicitly contains its `clientId`. This allows rules to verify ownership directly from the `resource.data.clientId` against the path `clientId`, without needing to fetch the parent `Client` document. Access for `PortalUser`s would still involve a self-referential `get()` to check their role within the `clientId`.\n\n**2. Support for Query-Able Security Rules (QAPs):**\n*   **Structural Segregation:** The entire structure is segregated by `clientId`. All data within `/clients/{clientId}/...` inherently belongs to that specific client. This ensures a homogeneous security posture within each client's partition.\n*   **Path-Based Ownership:** The use of `clients/{clientId}` as the top-level collection for tenant data inherently scopes all queries. A `list` operation on `/clients/{clientId}/portalUsers` will only ever return `PortalUser` documents for the specified `clientId`. Security rules can then easily enforce that the `request.auth.token.clientId` (if using custom claims, or derived from the requesting user's own `PortalUser` document) matches the `clientId` in the path, and that the requesting user has the 'Admin' role within that client. This prevents rules from acting as filters, as the query is already scoped by the path, and the rules simply validate the requester's permissions for that already-scoped data. The explicit `clientId` on nested documents also ensures that `list` operations remain secure and efficient, as rules don't need to perform expensive lookups across parent documents."
+  }
+}

@@ -40,7 +40,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useActionState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser, deleteUserFromClient } from '../actions';
+import { updateUser, deleteUserFromClient, createUserByAdmin } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function UserTableSkeleton() {
@@ -70,37 +70,14 @@ function UserTableSkeleton() {
     );
 }
 
-function SubmitButton({ children, pendingText }: { children: React.ReactNode; pendingText: string }) {
-    const [pending, setPending] = useState(false);
-    // This is a bit of a hack to show pending state without useFormStatus
-    // because we are in a parent component of the form.
-    useEffect(() => {
-        const form = document.querySelector('form');
-        const observer = new MutationObserver(() => {
-            const isSubmitting = form?.hasAttribute('data-submitting');
-            setPending(!!isSubmitting);
-        });
-        if(form) {
-            observer.observe(form, { attributes: true });
-        }
-        return () => observer.disconnect();
-    }, []);
-
-    return (
-        <Button type="submit" disabled={pending}>
-            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {pendingText}</> : children}
-        </Button>
-    );
-}
-
-
-export function UserTable({ adminUser }: { adminUser: PortalUser }) {
+export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }: { adminUser: PortalUser, showAddUserDialog: boolean, setShowAddUserDialog: (show: boolean) => void }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   
   const [userToEdit, setUserToEdit] = useState<PortalUser | null>(null);
   const [userToDelete, setUserToDelete] = useState<PortalUser | null>(null);
 
+  const [addState, addAction, isAddPending] = useActionState(createUserByAdmin, { message: '', error: false });
   const [updateState, updateAction, isUpdatePending] = useActionState(updateUser, { message: '', error: false });
   const [deleteState, deleteAction, isDeletePending] = useActionState(deleteUserFromClient, { message: '', error: false });
 
@@ -111,6 +88,13 @@ export function UserTable({ adminUser }: { adminUser: PortalUser }) {
 
   const { data: users, isLoading } = useCollection<PortalUser>(usersQuery);
   
+   useEffect(() => {
+      if (addState.message) {
+          toast({ title: addState.error ? 'Error' : 'Success', description: addState.message, variant: addState.error ? 'destructive' : 'default' });
+          if(!addState.error) setShowAddUserDialog(false);
+      }
+  }, [addState, toast, setShowAddUserDialog]);
+
   useEffect(() => {
       if (updateState.message) {
           toast({ title: updateState.error ? 'Error' : 'Success', description: updateState.message, variant: updateState.error ? 'destructive' : 'default' });
@@ -186,6 +170,58 @@ export function UserTable({ adminUser }: { adminUser: PortalUser }) {
           </TableBody>
         </Table>
       </div>
+
+       {/* Add User Dialog */}
+        <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+            <DialogContent>
+                <form action={addAction}>
+                    <DialogHeader>
+                        <DialogTitle>Add New User</DialogTitle>
+                        <DialogDescription>
+                            Create a new user account. They will receive an email to set their password.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <input type="hidden" name="clientId" value={adminUser.clientId} />
+                        <input type="hidden" name="callerUid" value={adminUser.id} />
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="add-firstName" className="text-right">First Name</Label>
+                            <Input id="add-firstName" name="firstName" className="col-span-3" required/>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="add-lastName" className="text-right">Last Name</Label>
+                            <Input id="add-lastName" name="lastName" className="col-span-3" required/>
+                        </div>
+                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="add-email" className="text-right">Email</Label>
+                            <Input id="add-email" name="email" type="email" className="col-span-3" required/>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="add-role" className="text-right">Role</Label>
+                             <Select name="role" defaultValue="StandardUser">
+                                <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select a role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Admin">Admin</SelectItem>
+                                    <SelectItem value="StandardUser">Standard User</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                         <DialogClose asChild>
+                            <Button type="button" variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button type="submit" disabled={isAddPending}>
+                            {isAddPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Adding User...</> : 'Add User'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+
 
         {/* Edit User Dialog */}
         <Dialog open={!!userToEdit} onOpenChange={(isOpen) => !isOpen && setUserToEdit(null)}>
@@ -263,5 +299,3 @@ export function UserTable({ adminUser }: { adminUser: PortalUser }) {
     </>
   );
 }
-
-    

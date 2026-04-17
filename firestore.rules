@@ -82,7 +82,7 @@ service cloud.firestore {
     function isPortalUserDataValidOnCreate(clientId, portalUserId) {
       let incomingData = request.resource.data;
       return incomingData.clientId == clientId && incomingData.id == portalUserId
-          && (isClientAdmin(clientId) || isOwner(portalUserId)); // An admin or the user themselves can create their own doc during signup
+          && isClientAdmin(clientId); // Only an admin can create a user doc
     }
 
     /**
@@ -107,23 +107,22 @@ service cloud.firestore {
     /**
      * @description Public mapping from a user's UID to their client ID.
      * Any authenticated user needs to be able to read their own mapping to find their client.
-     * A user can create their own mapping during signup.
+     * An admin can create this mapping when adding a new user.
      */
     match /user_to_client_map/{userId} {
       allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.clientId != null;
+      allow create: if isClientAdmin(request.resource.data.clientId);
       allow list, update, delete: if false;
     }
 
     /**
      * @description Rules for the top-level client tenant documents.
-     * A user can create a client as part of the signup flow. 
      * Only members of that client can read the client document.
      */
     match /clients/{clientId} {
       allow get: if isClientMember(clientId);
       allow list: if false; // Deny listing all clients for security
-      allow create: if isSignedIn();
+      allow create: if false; // Client creation is part of the old signup flow, disabled for now.
       allow update: if isClientAdmin(clientId);
       allow delete: if false;
     }
@@ -135,8 +134,8 @@ service cloud.firestore {
       allow get: if isOwner(portalUserId) || isClientAdmin(clientId);
       allow list: if isClientAdmin(clientId);
 
-      // User is created by Admin or during their own signup process
-      allow create: if isSignedIn() && isPortalUserDataValidOnCreate(clientId, portalUserId);
+      // User is created by an Admin
+      allow create: if isClientAdmin(clientId) && isPortalUserDataValidOnCreate(clientId, portalUserId);
 
       // User can update their own profile, Admin can update any profile in their client.
       allow update: if (isOwner(portalUserId) || isClientAdmin(clientId)) && arePortalUserFieldsValidOnUpdate(clientId);
@@ -147,9 +146,7 @@ service cloud.firestore {
     /**
      * @description Rules for the temporary state documents used in the OAuth 2.0 flow.
      * The server-side /api/auth/connect route needs to create these documents,
-     * and the /api/auth/callback route needs to read and delete them. Because these
-     * server routes use the client SDK without an auth context, these rules must
-     * be opened up.
+     * and the /api/auth/callback route needs to read and delete them.
      */
     match /oauth_states/{stateId} {
       allow read, write: if true;
@@ -157,8 +154,8 @@ service cloud.firestore {
 
     /**
      * @description Rules for the highly sensitive QuickBooks integration data.
-     * The `get` and `list` permissions are opened up to allow unauthenticated server-side
-     * processes (like Next.js Server Actions) to retrieve tokens for making API calls.
+     * The `list` and `create` operations are opened up to allow unauthenticated server-side
+     * processes (like Next.js Server Actions) to retrieve/create tokens for making API calls.
      * In a production environment with a more robust backend (e.g., using the Admin SDK),
      * these rules should be locked down significantly. Client-side updates and deletes
      * are disabled to prevent tampering with tokens.

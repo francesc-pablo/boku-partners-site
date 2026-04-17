@@ -3,8 +3,8 @@
 import { useUser } from '@/firebase';
 import { usePortalUser } from '@/hooks/use-portal-user';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Loader2, PlusCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { UserTable } from './_components/user-table';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const { portalUser, isLoading: isPortalUserLoading, error } = usePortalUser(user?.uid);
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -71,10 +72,14 @@ export default function AdminUsersPage() {
         </div>
       </section>
       <section className="container mx-auto">
-        {portalUser && <UserTable adminUser={portalUser} />}
+        <div className="flex justify-end mb-4">
+            <Button onClick={() => setShowAddUserDialog(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add User
+            </Button>
+        </div>
+        {portalUser && <UserTable adminUser={portalUser} showAddUserDialog={showAddUserDialog} setShowAddUserDialog={setShowAddUserDialog} />}
       </section>
     </>
   );
 }
-
-    

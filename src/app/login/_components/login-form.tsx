@@ -64,12 +64,6 @@ export function LoginForm() {
                 <Button type="submit" disabled={loading} className="w-full">
                   {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...</> : 'Login'}
                 </Button>
-                 <p className="text-sm text-muted-foreground">
-                    Don't have an account?{' '}
-                    <Link href="/signup" className="text-primary hover:underline">
-                        Sign Up
-                    </Link>
-                </p>
             </CardFooter>
         </Card>
     </form>

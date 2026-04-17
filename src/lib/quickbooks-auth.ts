@@ -37,6 +37,13 @@ export async function getValidAccessToken(clientId: string) {
   
   console.log('QuickBooks access token expired, refreshing...');
   try {
+    const qbClientId = process.env.NEXT_PUBLIC_QB_CLIENT_ID;
+    const qbClientSecret = process.env.NEXT_PUBLIC_QB_CLIENT_SECRET;
+    
+    if (!qbClientId || !qbClientSecret) {
+        throw new Error('QuickBooks environment variables NEXT_PUBLIC_QB_CLIENT_ID and NEXT_PUBLIC_QB_CLIENT_SECRET are not set on the server.');
+    }
+
     const res = await axios.post(
       'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
       new URLSearchParams({
@@ -48,7 +55,7 @@ export async function getValidAccessToken(clientId: string) {
           Authorization:
             'Basic ' +
             Buffer.from(
-              `${process.env.NEXT_PUBLIC_QB_CLIENT_ID}:${process.env.NEXT_PUBLIC_QB_CLIENT_SECRET}`
+              `${qbClientId}:${qbClientSecret}`
             ).toString('base64'),
           'Content-Type': 'application/x-www-form-urlencoded',
         },

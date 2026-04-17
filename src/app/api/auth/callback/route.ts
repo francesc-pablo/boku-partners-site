@@ -21,6 +21,14 @@ export async function GET(req: Request) {
   const errorUrl = new URL('/clients', origin);
 
   try {
+    const qbClientId = process.env.NEXT_PUBLIC_QB_CLIENT_ID;
+    const qbClientSecret = process.env.NEXT_PUBLIC_QB_CLIENT_SECRET;
+    const qbRedirectUri = process.env.NEXT_PUBLIC_QB_REDIRECT_URI;
+
+    if (!qbClientId || !qbClientSecret || !qbRedirectUri) {
+        throw new Error('QuickBooks environment variables are not configured on the server.');
+    }
+
     if (!returnedState) {
       throw new Error('State parameter is missing from the QuickBooks redirect.');
     }
@@ -49,11 +57,11 @@ export async function GET(req: Request) {
       new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: process.env.NEXT_PUBLIC_QB_REDIRECT_URI!,
+        redirect_uri: qbRedirectUri,
       }),
       {
         headers: {
-          Authorization: 'Basic ' + Buffer.from(`${process.env.NEXT_PUBLIC_QB_CLIENT_ID}:${process.env.NEXT_PUBLIC_QB_CLIENT_SECRET}`).toString('base64'),
+          Authorization: 'Basic ' + Buffer.from(`${qbClientId}:${qbClientSecret}`).toString('base64'),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       }
@@ -79,12 +87,6 @@ export async function GET(req: Request) {
       connectedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
-
-    // The 'id' field of the entity should match the document ID.
-    // NOTE: This is a second write, but it's necessary to ensure data integrity
-    // if the document ID is needed within the document itself.
-    // In our rules and logic, we refer to the doc ID, so this isn't strictly needed for now.
-    // await updateDoc(newIntegrationDoc, { id: newIntegrationDoc.id });
     
     const successUrl = new URL('/clients', origin);
     successUrl.searchParams.set('success', 'true');

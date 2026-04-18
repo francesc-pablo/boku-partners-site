@@ -1,6 +1,6 @@
 'use server';
 
-import { doc, getDoc, updateDoc, getFirestore } from 'firebase/firestore';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { getApps, initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseConfig } from '@/firebase/config';
@@ -65,49 +65,5 @@ export async function createUserByAdmin(formData: FormData) {
     } finally {
         // 5. Clean up the temporary Firebase app.
         await deleteApp(tempApp);
-    }
-}
-
-
-const UpdateUserSchema = z.object({
-  userId: z.string().min(1),
-  firstName: z.string().min(1, "First name is required."),
-  lastName: z.string().min(1, "Last name is required."),
-  role: z.enum(['Admin', 'StandardUser']),
-  clientId: z.string().min(1),
-  callerUid: z.string().min(1),
-});
-
-export async function updateUser(prevState: any, formData: FormData) {
-    const validatedFields = UpdateUserSchema.safeParse(Object.fromEntries(formData.entries()));
-
-    if (!validatedFields.success) {
-        return { message: 'Invalid data.', error: true, errors: validatedFields.error.flatten().fieldErrors };
-    }
-    
-    const { userId, firstName, lastName, role, clientId, callerUid } = validatedFields.data;
-
-    if (!(await isCallerAdmin(callerUid, clientId))) {
-        return { message: 'Permission denied. You must be an admin to update users.', error: true };
-    }
-    
-    // Prevent admin from removing their own admin role if they are the last one.
-    if (userId === callerUid && role !== 'Admin') {
-        return { message: "You cannot remove your own Admin role.", error: true };
-    }
-
-    try {
-        const userRef = doc(db, 'clients', clientId, 'portalUsers', userId);
-        await updateDoc(userRef, {
-            firstName,
-            lastName,
-            role,
-        });
-        // This revalidation is now less effective since the data is loaded client-side.
-        // The real-time listener from useCollection is what updates the UI.
-        // revalidatePath('/admin/users');
-        return { message: 'User updated successfully.', error: false };
-    } catch (e: any) {
-        return { message: `Failed to update user: ${e.message}`, error: true };
     }
 }

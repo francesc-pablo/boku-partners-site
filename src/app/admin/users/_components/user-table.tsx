@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useActionState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, useAuth } from '@/firebase';
 import { PortalUser } from '@/hooks/use-portal-user';
-import { collection, query, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +40,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser, createUserByAdmin } from '../actions';
+import { createUserByAdmin } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -82,8 +82,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
   const [userToDelete, setUserToDelete] = useState<PortalUser | null>(null);
   const [isDeletePending, setIsDeletePending] = useState(false);
   const [isAddPending, setIsAddPending] = useState(false);
-
-  const [updateState, updateAction, isUpdatePending] = useActionState(updateUser, { message: '', error: false });
+  const [isUpdatePending, setIsUpdatePending] = useState(false);
 
   const usersQuery = useMemoFirebase(() => {
     if (!firestore || !adminUser.clientId) return null;
@@ -92,13 +91,6 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
 
   const { data: users, isLoading } = useCollection<PortalUser>(usersQuery);
   
-
-  useEffect(() => {
-      if (updateState.message) {
-          toast({ title: updateState.error ? 'Error' : 'Success', description: updateState.message, variant: updateState.error ? 'destructive' : 'default' });
-          if(!updateState.error) setUserToEdit(null);
-      }
-  }, [updateState, toast]);
 
   const handleAddUserSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -173,6 +165,55 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
           setIsAddPending(false);
       });
   };
+
+  const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!userToEdit) return;
+
+    // Prevent admin from removing their own admin role if they are the last one.
+    // This is a simple client-side check. A more robust solution would be a server-side check.
+    if (userToEdit.id === adminUser.id && new FormData(e.currentTarget).get('role') !== 'Admin') {
+      toast({ title: 'Error', description: "You cannot remove your own Admin role.", variant: 'destructive' });
+      return;
+    }
+
+    setIsUpdatePending(true);
+
+    const formData = new FormData(e.currentTarget);
+    const updates = {
+        firstName: formData.get('firstName') as string,
+        lastName: formData.get('lastName') as string,
+        role: formData.get('role') as 'Admin' | 'StandardUser',
+    };
+
+    if (!updates.firstName || !updates.lastName) {
+        toast({ title: 'Error', description: 'First and last name are required.', variant: 'destructive' });
+        setIsUpdatePending(false);
+        return;
+    }
+
+    const userRef = doc(firestore, 'clients', adminUser.clientId, 'portalUsers', userToEdit.id);
+
+    updateDoc(userRef, updates)
+        .then(() => {
+            toast({ title: 'Success', description: 'User updated successfully.' });
+            setUserToEdit(null);
+        })
+        .catch(error => {
+            // Create and emit the contextual error for the listener to catch
+            const contextualError = new FirestorePermissionError({
+                path: userRef.path,
+                operation: 'update',
+                requestResourceData: updates,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+            // The global error listener will throw the error, so we don't need to toast it here.
+        })
+        .finally(() => {
+            setIsUpdatePending(false);
+        });
+  };
+
 
   const handleDeleteConfirm = () => {
     if (!userToDelete || !firestore || !adminUser.clientId) return;
@@ -316,7 +357,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
         {/* Edit User Dialog */}
         <Dialog open={!!userToEdit} onOpenChange={(isOpen) => !isOpen && setUserToEdit(null)}>
             <DialogContent>
-                <form action={updateAction}>
+                <form onSubmit={handleUpdateSubmit}>
                     <DialogHeader>
                         <DialogTitle>Edit User</DialogTitle>
                         <DialogDescription>
@@ -324,17 +365,13 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <input type="hidden" name="userId" value={userToEdit?.id} />
-                        <input type="hidden" name="clientId" value={adminUser.clientId} />
-                        <input type="hidden" name="callerUid" value={adminUser.id} />
-
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="firstName" className="text-right">First Name</Label>
-                            <Input id="firstName" name="firstName" defaultValue={userToEdit?.firstName} className="col-span-3" />
+                            <Input id="firstName" name="firstName" defaultValue={userToEdit?.firstName} className="col-span-3" required />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="lastName" className="text-right">Last Name</Label>
-                            <Input id="lastName" name="lastName" defaultValue={userToEdit?.lastName} className="col-span-3" />
+                            <Input id="lastName" name="lastName" defaultValue={userToEdit?.lastName} className="col-span-3" required />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="role" className="text-right">Role</Label>

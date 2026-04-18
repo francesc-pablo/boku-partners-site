@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import admin from 'firebase-admin';
+import { applicationDefault } from 'firebase-admin/app'; // Explicitly import applicationDefault
 
 // This function ensures the Firebase Admin SDK is initialized.
 // It's idempotent, meaning it's safe to call multiple times.
@@ -9,11 +10,15 @@ function ensureAdminInitialized() {
   // Check if there are no initialized apps
   if (!admin.apps.length) {
     try {
-      // Initialize without arguments to use Application Default Credentials (ADC)
-      // in the App Hosting environment where this code will run.
-      admin.initializeApp();
+      // Explicitly initialize with Application Default Credentials.
+      // This is more robust and should work in the App Hosting environment.
+      admin.initializeApp({
+        credential: applicationDefault(),
+      });
     } catch (e: any) {
       console.error('Firebase Admin SDK initialization error:', e.stack);
+      // We throw an error here to make it clear that initialization failed.
+      throw new Error('Could not initialize Firebase Admin SDK. ' + e.message);
     }
   }
 }
@@ -57,11 +62,7 @@ export async function createUserByAdmin(formData: FormData) {
 
 export async function deleteUser(uid: string) {
     ensureAdminInitialized(); // Ensure SDK is ready before proceeding
-
-    if (!admin.apps.length) {
-        // This check is a safeguard in case initialization fails silently.
-        return { success: false, message: 'Firebase Admin SDK could not be initialized.' };
-    }
+    
     try {
         await admin.auth().deleteUser(uid);
         return { success: true };

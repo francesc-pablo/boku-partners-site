@@ -40,7 +40,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { createUserByAdmin, deleteUser } from '../actions';
+import { createUserByAdmin } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -226,14 +226,6 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     setIsDeletePending(true);
 
     try {
-        // 1. Delete the auth user first via server action.
-        const authDeleteResult = await deleteUser(userToDelete.id);
-
-        if (!authDeleteResult.success) {
-            throw new Error(authDeleteResult.message || 'Failed to delete authentication user.');
-        }
-
-        // 2. If auth user is deleted, delete the Firestore documents.
         const userRef = doc(firestore, 'clients', adminUser.clientId, 'portalUsers', userToDelete.id);
         await deleteDoc(userRef);
         
@@ -242,11 +234,16 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
 
         toast({
             title: 'Success',
-            description: `User ${userToDelete.firstName} ${userToDelete.lastName} has been completely removed from the system.`,
+            description: `User ${userToDelete.firstName} ${userToDelete.lastName}'s database records have been removed. Their authentication account must be removed manually from the Firebase Console.`,
         });
 
     } catch (error: any) {
-        toast({ title: 'Deletion Error', description: error.message, variant: 'destructive' });
+        const userRef = doc(firestore, 'clients', adminUser.clientId, 'portalUsers', userToDelete.id);
+        const contextualError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', contextualError);
     } finally {
         setUserToDelete(null);
         setIsDeletePending(false);
@@ -417,7 +414,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action will permanently delete the user <span className="font-bold">{userToDelete?.firstName} {userToDelete?.lastName}</span> and their authentication account. This action cannot be undone.
+                        This action will permanently delete the user <span className="font-bold">{userToDelete?.firstName} {userToDelete?.lastName}</span>'s records from the database. This action cannot be undone.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

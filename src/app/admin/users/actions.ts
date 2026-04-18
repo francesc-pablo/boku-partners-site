@@ -40,17 +40,3 @@ export async function createUserByAdmin(formData: FormData) {
         return { success: false, message: `Failed to create auth user: ${errorMessage}` };
     }
 }
-
-export async function deleteUser(uid: string) {
-    ensureAdminInitialized(); // Ensure SDK is ready before proceeding
-    
-    try {
-        await admin.auth().deleteUser(uid);
-        return { success: true };
-    } catch (error: any) {
-        console.error(`Admin SDK user deletion error for UID ${uid}:`, error);
-        // Return the specific error message from Firebase to the client.
-        const errorMessage = error.message || 'An unknown error occurred during user deletion on the server.';
-        return { success: false, message: `Failed to delete authentication user: ${errorMessage}` };
-    }
-}

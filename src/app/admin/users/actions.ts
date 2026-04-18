@@ -1,6 +1,5 @@
 'use server';
 
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { getApps, initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseConfig } from '@/firebase/config';
@@ -8,22 +7,11 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import admin from 'firebase-admin';
 
-// Initialize main app instance if not already initialized
-if (!getApps().length) {
-    initializeApp(firebaseConfig);
-}
-const db = getFirestore();
-
-
-// Initialize firebase-admin
+// Initialize firebase-admin. This will use Application Default Credentials (ADC).
+// In a Google Cloud environment (like App Hosting), these are available automatically.
+// In a local environment, you must set the GOOGLE_APPLICATION_CREDENTIALS environment variable.
 if (!admin.apps.length) {
-  try {
-    // This will use the GOOGLE_APPLICATION_CREDENTIALS environment variable
-    // for authentication, which is the standard and secure way in Cloud environments.
-    admin.initializeApp();
-  } catch (e) {
-    console.error("Firebase admin initialization error. Ensure GOOGLE_APPLICATION_CREDENTIALS is set for server-side actions.", e);
-  }
+  admin.initializeApp();
 }
 
 const CreateUserServerSchema = z.object({

@@ -6,13 +6,25 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseConfig } from '@/firebase/config';
 import { z } from 'zod';
 import crypto from 'crypto';
-
+import admin from 'firebase-admin';
 
 // Initialize main app instance if not already initialized
 if (!getApps().length) {
     initializeApp(firebaseConfig);
 }
 const db = getFirestore();
+
+
+// Initialize firebase-admin
+if (!admin.apps.length) {
+  try {
+    // This will use the GOOGLE_APPLICATION_CREDENTIALS environment variable
+    // for authentication, which is the standard and secure way in Cloud environments.
+    admin.initializeApp();
+  } catch (e) {
+    console.error("Firebase admin initialization error. Ensure GOOGLE_APPLICATION_CREDENTIALS is set for server-side actions.", e);
+  }
+}
 
 const CreateUserServerSchema = z.object({
   email: z.string().email(),
@@ -53,5 +65,17 @@ export async function createUserByAdmin(formData: FormData) {
     } finally {
         // 5. Clean up the temporary Firebase app.
         await deleteApp(tempApp);
+    }
+}
+
+export async function deleteUser(uid: string) {
+    if (!admin.apps.length) {
+        return { success: false, message: 'Firebase Admin SDK not initialized.' };
+    }
+    try {
+        await admin.auth().deleteUser(uid);
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, message: `Failed to delete authentication user: ${error.message}` };
     }
 }

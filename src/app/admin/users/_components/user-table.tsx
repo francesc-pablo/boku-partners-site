@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, useAuth } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { PortalUser } from '@/hooks/use-portal-user';
-import { collection, query, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, query, doc, setDoc, serverTimestamp, updateDoc, deleteDoc } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +40,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { createUserByAdmin } from '../actions';
+import { createUserByAdmin, deleteUser } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -215,7 +215,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
   };
 
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!userToDelete || !firestore || !adminUser.clientId) return;
 
     if (userToDelete.id === adminUser.id) {
@@ -225,19 +225,32 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     
     setIsDeletePending(true);
 
-    const userRef = doc(firestore, 'clients', adminUser.clientId, 'portalUsers', userToDelete.id);
-    deleteDocumentNonBlocking(userRef);
-    
-    const userClientMapRef = doc(firestore, 'user_to_client_map', userToDelete.id);
-    deleteDocumentNonBlocking(userClientMapRef);
+    try {
+        // 1. Delete the auth user first via server action.
+        const authDeleteResult = await deleteUser(userToDelete.id);
 
-    toast({
-        title: 'Success',
-        description: `User ${userToDelete.firstName} ${userToDelete.lastName} has been removed. NOTE: The user's authentication account must be removed from the Firebase Console manually.`,
-    });
+        if (!authDeleteResult.success) {
+            throw new Error(authDeleteResult.message || 'Failed to delete authentication user.');
+        }
 
-    setUserToDelete(null);
-    setIsDeletePending(false);
+        // 2. If auth user is deleted, delete the Firestore documents.
+        const userRef = doc(firestore, 'clients', adminUser.clientId, 'portalUsers', userToDelete.id);
+        await deleteDoc(userRef);
+        
+        const userClientMapRef = doc(firestore, 'user_to_client_map', userToDelete.id);
+        await deleteDoc(userClientMapRef);
+
+        toast({
+            title: 'Success',
+            description: `User ${userToDelete.firstName} ${userToDelete.lastName} has been completely removed from the system.`,
+        });
+
+    } catch (error: any) {
+        toast({ title: 'Deletion Error', description: error.message, variant: 'destructive' });
+    } finally {
+        setUserToDelete(null);
+        setIsDeletePending(false);
+    }
   };
 
   if (isLoading) {
@@ -404,7 +417,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action will remove the user <span className="font-bold">{userToDelete?.firstName} {userToDelete?.lastName}</span> from this client account. It will not delete their authentication account. This action cannot be undone.
+                        This action will permanently delete the user <span className="font-bold">{userToDelete?.firstName} {userToDelete?.lastName}</span> and their authentication account. This action cannot be undone.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

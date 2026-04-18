@@ -314,7 +314,6 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <input type="hidden" name="clientId" value={adminUser.clientId} />
-                        <input type="hidden" name="callerUid" value={adminUser.id} />
 
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="add-firstName" className="text-right">First Name</Label>

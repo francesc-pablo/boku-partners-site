@@ -14,17 +14,9 @@ if (!getApps().length) {
 }
 const db = getFirestore();
 
-async function isCallerAdmin(callerUid: string, clientId: string): Promise<boolean> {
-    if (!callerUid || !clientId) return false;
-    const portalUserRef = doc(db, 'clients', clientId, 'portalUsers', callerUid);
-    const userDoc = await getDoc(portalUserRef);
-    return userDoc.exists() && userDoc.data().role === 'Admin';
-}
-
 const CreateUserServerSchema = z.object({
   email: z.string().email(),
   clientId: z.string().min(1),
-  callerUid: z.string().min(1),
 });
 
 
@@ -35,11 +27,7 @@ export async function createUserByAdmin(formData: FormData) {
         return { success: false, message: 'Invalid data for user creation on server.' };
     }
 
-    const { email, clientId, callerUid } = validatedFields.data;
-
-    if (!(await isCallerAdmin(callerUid, clientId))) {
-        return { success: false, message: 'Permission denied. You must be an admin to create users.' };
-    }
+    const { email } = validatedFields.data;
 
     // Use a secondary, temporary Firebase app to create the user.
     // This prevents the admin from being signed out.

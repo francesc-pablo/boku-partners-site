@@ -6,6 +6,8 @@ import admin from 'firebase-admin';
 // It's idempotent, meaning it's safe to call multiple times.
 function ensureAdminInitialized() {
   if (!admin.apps.length) {
+    // In a managed environment like App Hosting, initializeApp() with no arguments
+    // should automatically discover credentials.
     admin.initializeApp();
   }
 }
@@ -14,7 +16,6 @@ export async function createUserByAdmin(formData: FormData) {
     ensureAdminInitialized();
 
     const email = formData.get('email') as string;
-    // Note: Zod validation temporarily removed for debugging.
 
     if (!email) {
         return { success: false, message: 'Email is required.' };

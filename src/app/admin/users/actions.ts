@@ -57,6 +57,7 @@ export async function deleteUser(uid: string) {
         return { success: true };
     } catch (error: any) {
         console.error(`Admin SDK user deletion error for UID ${uid}:`, error);
-        return { success: false, message: `Failed to delete authentication user. See server logs for details.` };
+        const errorMessage = error.message || 'An unknown error occurred during user deletion on the server.';
+        return { success: false, message: `Failed to delete authentication user: ${errorMessage}` };
     }
 }

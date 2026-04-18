@@ -49,30 +49,25 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
+    
     /**
-     * A reusable function to retrieve the requesting user's own PortalUser document data.
-     * This is the source of truth for their role and clientId.
+     * Returns true if the requesting user is an 'Admin' for the specified client.
+     * It safely gets the user's own document and checks for the 'Admin' role.
+     * The 'get' operation is permitted by the 'get' rule on portalUsers, which allows a user to read their own document.
      */
-    function getRequestingUserData(clientId) {
-      return get(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid)).data;
+    function isClientAdmin(clientId) {
+      let userDocPath = /databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid);
+      let userDoc = get(userDocPath);
+      // Check that the document exists, has a 'role' field, and the role is 'Admin'.
+      return userDoc.data != null && 'role' in userDoc.data && userDoc.data.role == 'Admin';
     }
 
     /**
      * Returns true if the requesting user is a member of the specified client organization.
-     * It checks for the existence of their user document within that client's subcollection.
      */
     function isClientMember(clientId) {
       return isSignedIn() 
         && exists(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid));
-    }
-
-    /**
-     * Returns true if the requesting user is an 'Admin' for the specified client.
-     * This implicitly checks for membership as the 'get' will fail if the user document doesn't exist.
-     */
-    function isClientAdmin(clientId) {
-      return isClientMember(clientId) && getRequestingUserData(clientId).role == 'Admin';
     }
     
     /**
@@ -112,7 +107,10 @@ service cloud.firestore {
     match /user_to_client_map/{userId} {
       allow get: if isOwner(userId);
       allow create: if isClientAdmin(request.resource.data.clientId);
-      allow list, update, delete: if false;
+      // To delete a mapping, the requester must be an admin of the client this mapping points to.
+      // This requires reading the document before deleting it.
+      allow delete: if isClientAdmin(resource.data.clientId);
+      allow list, update: if false;
     }
 
     /**

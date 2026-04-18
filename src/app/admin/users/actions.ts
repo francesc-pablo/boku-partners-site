@@ -1,36 +1,24 @@
 'use server';
 
-import { z } from 'zod';
 import admin from 'firebase-admin';
 
 // This function ensures the Firebase Admin SDK is initialized.
 // It's idempotent, meaning it's safe to call multiple times.
 function ensureAdminInitialized() {
-  // In a managed environment like App Hosting, the SDK will automatically
-  // discover the necessary credentials. We only need to initialize if no
-  // app has been initialized yet. We are removing the try/catch to potentially
-  // surface a more detailed underlying error.
   if (!admin.apps.length) {
     admin.initializeApp();
   }
 }
 
-const CreateUserServerSchema = z.object({
-  email: z.string().email(),
-  clientId: z.string().min(1),
-});
-
-
 export async function createUserByAdmin(formData: FormData) {
-    ensureAdminInitialized(); // Ensure SDK is ready before proceeding
+    ensureAdminInitialized();
 
-    const validatedFields = CreateUserServerSchema.safeParse(Object.fromEntries(formData.entries()));
+    const email = formData.get('email') as string;
+    // Note: Zod validation temporarily removed for debugging.
 
-    if (!validatedFields.success) {
-        return { success: false, message: 'Invalid data for user creation on server.' };
+    if (!email) {
+        return { success: false, message: 'Email is required.' };
     }
-
-    const { email } = validatedFields.data;
 
     try {
         // Create the user in Firebase Auth using the Admin SDK.

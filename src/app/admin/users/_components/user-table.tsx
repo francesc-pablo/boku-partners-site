@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useActionState } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, useAuth } from '@/firebase';
 import { PortalUser } from '@/hooks/use-portal-user';
-import { collection, query, doc } from 'firebase/firestore';
+import { collection, query, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { updateUser, createUserByAdmin } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 function UserTableSkeleton() {
     return (
@@ -71,13 +75,14 @@ function UserTableSkeleton() {
 
 export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }: { adminUser: PortalUser, showAddUserDialog: boolean, setShowAddUserDialog: (show: boolean) => void }) {
   const firestore = useFirestore();
+  const auth = useAuth();
   const { toast } = useToast();
   
   const [userToEdit, setUserToEdit] = useState<PortalUser | null>(null);
   const [userToDelete, setUserToDelete] = useState<PortalUser | null>(null);
   const [isDeletePending, setIsDeletePending] = useState(false);
+  const [isAddPending, setIsAddPending] = useState(false);
 
-  const [addState, addAction, isAddPending] = useActionState(createUserByAdmin, { message: '', error: false });
   const [updateState, updateAction, isUpdatePending] = useActionState(updateUser, { message: '', error: false });
 
   const usersQuery = useMemoFirebase(() => {
@@ -87,12 +92,6 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
 
   const { data: users, isLoading } = useCollection<PortalUser>(usersQuery);
   
-   useEffect(() => {
-      if (addState.message) {
-          toast({ title: addState.error ? 'Error' : 'Success', description: addState.message, variant: addState.error ? 'destructive' : 'default' });
-          if(!addState.error) setShowAddUserDialog(false);
-      }
-  }, [addState, toast, setShowAddUserDialog]);
 
   useEffect(() => {
       if (updateState.message) {
@@ -100,6 +99,80 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
           if(!updateState.error) setUserToEdit(null);
       }
   }, [updateState, toast]);
+
+  const handleAddUserSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsAddPending(true);
+
+    const formData = new FormData(e.currentTarget);
+    const { firstName, lastName, role, clientId } = Object.fromEntries(formData.entries());
+
+    // 1. Call server action to create the auth user.
+    const serverResult = await createUserByAdmin(formData);
+
+    if (!serverResult.success || !serverResult.newUserUid || !serverResult.email) {
+      toast({ title: 'Error', description: serverResult.message, variant: 'destructive' });
+      setIsAddPending(false);
+      return;
+    }
+
+    const { newUserUid, email } = serverResult;
+
+    // 2. Perform client-side writes and email sending.
+    const portalUserRef = doc(firestore, 'clients', clientId as string, 'portalUsers', newUserUid);
+    const portalUserData = {
+        id: newUserUid,
+        clientId: clientId as string,
+        email: email,
+        role: role as 'Admin' | 'StandardUser',
+        firstName: firstName as string,
+        lastName: lastName as string,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+    
+    // Using a promise chain to handle sequential operations and error handling
+    setDoc(portalUserRef, portalUserData)
+      .catch(err => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: portalUserRef.path,
+              operation: 'create',
+              requestResourceData: portalUserData
+          }));
+          // Re-throw to break the promise chain
+          throw new Error('Failed to create user profile in Firestore.'); 
+      })
+      .then(() => {
+          const userClientMapRef = doc(firestore, 'user_to_client_map', newUserUid);
+          const userClientMapData = { clientId: clientId as string };
+          return setDoc(userClientMapRef, userClientMapData).catch(err => {
+              errorEmitter.emit('permission-error', new FirestorePermissionError({
+                  path: userClientMapRef.path,
+                  operation: 'create',
+                  requestResourceData: userClientMapData
+              }));
+              throw new Error('Failed to create user-to-client map.');
+          });
+      })
+      .then(() => {
+          return sendPasswordResetEmail(auth, email);
+      })
+      .then(() => {
+          toast({ title: 'Success', description: 'User created successfully. They have been sent an email to set their password.' });
+          setShowAddUserDialog(false);
+      })
+      .catch(err => {
+          // This catches errors from the chain.
+          // Permission errors are already emitted. The listener will throw them.
+          // We only toast other, unexpected errors.
+          if (!err.message.startsWith('Failed to create')) {
+            toast({ title: 'An Error Occurred', description: err.message, variant: 'destructive' });
+          }
+      })
+      .finally(() => {
+          setIsAddPending(false);
+      });
+  };
 
   const handleDeleteConfirm = () => {
     if (!userToDelete || !firestore || !adminUser.clientId) return;
@@ -191,7 +264,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
        {/* Add User Dialog */}
         <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
             <DialogContent>
-                <form action={addAction}>
+                <form onSubmit={handleAddUserSubmit}>
                     <DialogHeader>
                         <DialogTitle>Add New User</DialogTitle>
                         <DialogDescription>

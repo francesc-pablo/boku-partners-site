@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -31,13 +30,6 @@ const services = [
 ];
 
 export function Footer() {
-  const pathname = usePathname();
-  const isAuthedRoute = pathname.startsWith('/clients') || pathname.startsWith('/admin');
-
-  if (isAuthedRoute) {
-    return null;
-  }
-
   return (
     <footer className="bg-secondary">
       <div className="container mx-auto py-12">

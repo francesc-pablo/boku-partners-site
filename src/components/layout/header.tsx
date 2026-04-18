@@ -25,8 +25,6 @@ export function Header() {
   const lastScrollY = useRef(0);
   const headerHeight = 80; // h-20 is 5rem which is 80px
 
-  const isAuthedRoute = pathname.startsWith('/clients') || pathname.startsWith('/admin');
-
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -49,10 +47,6 @@ export function Header() {
     await auth.signOut();
   };
   
-  if (isAuthedRoute) {
-    return null;
-  }
-
   return (
     <header
       className={cn(

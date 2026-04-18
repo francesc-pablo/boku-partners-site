@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useState, useEffect, useActionState } from 'react';
+import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
 import { PortalUser } from '@/hooks/use-portal-user';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, doc } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,9 +38,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useActionState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser, deleteUserFromClient, createUserByAdmin } from '../actions';
+import { updateUser, createUserByAdmin } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function UserTableSkeleton() {
@@ -76,10 +75,10 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
   
   const [userToEdit, setUserToEdit] = useState<PortalUser | null>(null);
   const [userToDelete, setUserToDelete] = useState<PortalUser | null>(null);
+  const [isDeletePending, setIsDeletePending] = useState(false);
 
   const [addState, addAction, isAddPending] = useActionState(createUserByAdmin, { message: '', error: false });
   const [updateState, updateAction, isUpdatePending] = useActionState(updateUser, { message: '', error: false });
-  const [deleteState, deleteAction, isDeletePending] = useActionState(deleteUserFromClient, { message: '', error: false });
 
   const usersQuery = useMemoFirebase(() => {
     if (!firestore || !adminUser.clientId) return null;
@@ -102,12 +101,30 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
       }
   }, [updateState, toast]);
 
-  useEffect(() => {
-      if (deleteState.message) {
-          toast({ title: deleteState.error ? 'Error' : 'Success', description: deleteState.message, variant: deleteState.error ? 'destructive' : 'default' });
-          if(!deleteState.error) setUserToDelete(null);
-      }
-  }, [deleteState, toast]);
+  const handleDeleteConfirm = () => {
+    if (!userToDelete || !firestore || !adminUser.clientId) return;
+
+    if (userToDelete.id === adminUser.id) {
+        toast({ title: 'Error', description: 'You cannot delete your own account.', variant: 'destructive' });
+        return;
+    }
+    
+    setIsDeletePending(true);
+
+    const userRef = doc(firestore, 'clients', adminUser.clientId, 'portalUsers', userToDelete.id);
+    deleteDocumentNonBlocking(userRef);
+    
+    const userClientMapRef = doc(firestore, 'user_to_client_map', userToDelete.id);
+    deleteDocumentNonBlocking(userClientMapRef);
+
+    toast({
+        title: 'Success',
+        description: `User ${userToDelete.firstName} ${userToDelete.lastName} has been removed. NOTE: The user's authentication account must be removed from the Firebase Console manually.`,
+    });
+
+    setUserToDelete(null);
+    setIsDeletePending(false);
+  };
 
   if (isLoading) {
     return <UserTableSkeleton />;
@@ -275,25 +292,20 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={!!userToDelete} onOpenChange={(isOpen) => !isOpen && setUserToDelete(null)}>
         <AlertDialogContent>
-            <form action={deleteAction}>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
                         This action will remove the user <span className="font-bold">{userToDelete?.firstName} {userToDelete?.lastName}</span> from this client account. It will not delete their authentication account. This action cannot be undone.
                     </AlertDialogDescription>
-                     <input type="hidden" name="userIdToDelete" value={userToDelete?.id} />
-                     <input type="hidden" name="clientId" value={adminUser.clientId} />
-                     <input type="hidden" name="callerUid" value={adminUser.id} />
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction asChild>
-                         <Button type="submit" variant="destructive" disabled={isDeletePending}>
+                         <Button onClick={handleDeleteConfirm} variant="destructive" disabled={isDeletePending}>
                             {isDeletePending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Deleting...</> : 'Yes, delete user'}
                         </Button>
                     </AlertDialogAction>
                 </AlertDialogFooter>
-            </form>
         </AlertDialogContent>
       </AlertDialog>
     </>

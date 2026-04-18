@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { doc, getDoc, updateDoc, deleteDoc, setDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
 import { getApps, initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { firebaseConfig } from '@/firebase/config';
@@ -133,45 +133,5 @@ export async function updateUser(prevState: any, formData: FormData) {
         return { message: 'User updated successfully.', error: false };
     } catch (e: any) {
         return { message: `Failed to update user: ${e.message}`, error: true };
-    }
-}
-
-
-const DeleteUserSchema = z.object({
-  userIdToDelete: z.string().min(1),
-  clientId: z.string().min(1),
-  callerUid: z.string().min(1),
-});
-
-export async function deleteUserFromClient(prevState: any, formData: FormData) {
-    const validatedFields = DeleteUserSchema.safeParse(Object.fromEntries(formData.entries()));
-
-    if (!validatedFields.success) {
-        return { message: 'Invalid data provided.', error: true };
-    }
-
-    const { userIdToDelete, clientId, callerUid } = validatedFields.data;
-
-    if (userIdToDelete === callerUid) {
-        return { message: 'You cannot delete your own account.', error: true };
-    }
-
-    if (!(await isCallerAdmin(callerUid, clientId))) {
-        return { message: 'Permission denied. You must be an admin to delete users.', error: true };
-    }
-
-    try {
-        // Delete the portalUser document
-        const userRef = doc(db, 'clients', clientId, 'portalUsers', userIdToDelete);
-        await deleteDoc(userRef);
-        
-        // Delete the user-to-client map document
-        const userClientMapRef = doc(db, 'user_to_client_map', userIdToDelete);
-        await deleteDoc(userClientMapRef);
-
-        revalidatePath('/admin/users');
-        return { message: 'User removed from client successfully. NOTE: The user\'s authentication account is NOT deleted and must be removed from the Firebase Console manually.', error: false };
-    } catch (e: any) {
-        return { message: `Failed to delete user: ${e.message}`, error: true };
     }
 }

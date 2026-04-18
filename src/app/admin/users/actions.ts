@@ -2,7 +2,6 @@
 
 import { z } from 'zod';
 import admin from 'firebase-admin';
-import { applicationDefault } from 'firebase-admin/app'; // Explicitly import applicationDefault
 
 // This function ensures the Firebase Admin SDK is initialized.
 // It's idempotent, meaning it's safe to call multiple times.
@@ -10,11 +9,10 @@ function ensureAdminInitialized() {
   // Check if there are no initialized apps
   if (!admin.apps.length) {
     try {
-      // Explicitly initialize with Application Default Credentials.
-      // This is more robust and should work in the App Hosting environment.
-      admin.initializeApp({
-        credential: applicationDefault(),
-      });
+      // Initialize without explicit credentials.
+      // When running in a Google Cloud environment (like App Hosting),
+      // the SDK will automatically discover the service account credentials.
+      admin.initializeApp();
     } catch (e: any) {
       console.error('Firebase Admin SDK initialization error:', e.stack);
       // We throw an error here to make it clear that initialization failed.

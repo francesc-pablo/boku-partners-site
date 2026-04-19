@@ -44,6 +44,7 @@ function ClientPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [authError, setAuthError] = useState(false);
   
   const searchParams = useSearchParams();
   const firestore = useFirestore();
@@ -68,6 +69,7 @@ function ClientPageContent() {
 
     setLoading(true);
     setError(null);
+    setAuthError(false);
     try {
       const dashboardData = await getDashboardData({
           clientId: portalUser.clientId,
@@ -76,7 +78,12 @@ function ClientPageContent() {
       });
       setData(dashboardData);
     } catch (e: any) {
-        setError(e.message);
+        if (e.message.includes('Failed to refresh QuickBooks token')) {
+            setError('Your connection to QuickBooks has expired. Please reconnect to continue.');
+            setAuthError(true);
+        } else {
+            setError(e.message);
+        }
     } finally {
       setLoading(false);
     }
@@ -197,7 +204,15 @@ function ClientPageContent() {
                 </Card>
 
                 {success && <Alert><AlertTitle>Success!</AlertTitle><AlertDescription>{success}</AlertDescription></Alert>}
-                {error && <Alert variant="destructive" className="max-w-2xl mx-auto"><AlertTitle>Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
+                {error && <Alert variant="destructive" className="max-w-2xl mx-auto"><AlertTitle>Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}
+                    {authError && (
+                        <div className="mt-4">
+                            <Button asChild>
+                                <a href={`/api/auth/connect?clientId=${portalUser?.clientId}`}>Reconnect to QuickBooks</a>
+                            </Button>
+                        </div>
+                    )}
+                </AlertDescription></Alert>}
 
                 {loading ? <PageSkeleton /> : data ? <ClientDashboard data={data} /> : (
                     <div className="text-center p-8 border rounded-lg">

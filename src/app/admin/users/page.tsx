@@ -15,7 +15,7 @@ export default function AdminUsersPage() {
 
   // The AuthedLayout now handles loading, auth checks, and redirection.
   // We only need to check for the admin role here to render the page content.
-  if (portalUser?.role !== 'Admin') {
+  if (portalUser?.role !== 'Admin' && portalUser?.role !== 'Boku_Access') {
     return (
       <Alert variant="destructive">
         <AlertTitle>Access Denied</AlertTitle>
@@ -42,3 +42,5 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
+    

@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 
 function PageSkeleton() {
     return (
-        <div className="h-full flex flex-col gap-2 p-2">
+        <div className="h-full flex flex-col gap-2 px-2 pb-2">
             <div className="flex items-center justify-between">
                 <div>
                     <Skeleton className="h-6 w-40 mb-1" />
@@ -124,7 +124,7 @@ function ClientPageContent() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-2 p-2">
+    <div className="h-full flex flex-col gap-2 px-2 pb-2">
         {!isConnected && (
             <div className="flex-1 flex items-center justify-center">
                 <Card className="max-w-md mx-auto w-full">

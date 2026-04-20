@@ -20,19 +20,19 @@ import { Button } from '@/components/ui/button';
 
 function PageSkeleton() {
     return (
-        <div className="h-full flex flex-col gap-4 p-4">
+        <div className="h-full flex flex-col gap-2 p-2">
             <div className="flex items-center justify-between">
                 <div>
-                    <Skeleton className="h-7 w-48 mb-2" />
-                    <Skeleton className="h-5 w-72" />
+                    <Skeleton className="h-6 w-40 mb-1" />
+                    <Skeleton className="h-4 w-64" />
                 </div>
             </div>
              <Card>
-                <CardHeader className="p-4 pb-2">
-                    <Skeleton className="h-5 w-1/4 mb-1" />
+                <CardHeader className="p-2 pb-2">
+                    <Skeleton className="h-4 w-1/4 mb-1" />
                     <Skeleton className="h-3 w-2/4" />
                 </CardHeader>
-                <CardContent className="p-4 pt-2">
+                <CardContent className="p-2 pt-2">
                     <div className="flex flex-col md:flex-row items-center gap-2">
                         <Skeleton className="h-9 w-full md:w-40" />
                         <Skeleton className="h-9 w-full md:w-40" />
@@ -124,7 +124,7 @@ function ClientPageContent() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-4 p-4">
+    <div className="h-full flex flex-col gap-2 p-2">
         {!isConnected && (
             <div className="flex-1 flex items-center justify-center">
                 <Card className="max-w-md mx-auto w-full">
@@ -148,16 +148,16 @@ function ClientPageContent() {
             <>
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold">Quickbooks</h1>
-                        <p className="text-muted-foreground">View your QuickBooks financial data at a glance.</p>
+                        <h1 className="text-xl font-bold">Quickbooks</h1>
+                        <p className="text-sm text-muted-foreground">View your QuickBooks financial data at a glance.</p>
                     </div>
                 </div>
                 <Card>
-                    <CardHeader className="p-4 pb-2">
-                        <CardTitle className="text-lg">Report Filters</CardTitle>
+                    <CardHeader className="p-2 pb-2">
+                        <CardTitle className="text-base">Report Filters</CardTitle>
                         <CardDescription className="text-xs">Select a date range to view your financial reports.</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-4 pt-2 flex flex-col md:flex-row items-center gap-2">
+                    <CardContent className="p-2 pt-2 flex flex-col md:flex-row items-center gap-2">
                         <Popover>
                             <PopoverTrigger asChild>
                             <Button

@@ -75,6 +75,8 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
         { href: '/admin/users', label: 'User Management', icon: Users, adminOnly: true },
     ];
 
+    const activeNavItem = navItems.find(item => pathname.startsWith(item.href));
+
     return (
         <SidebarProvider>
             <Sidebar collapsible="icon">
@@ -104,6 +106,9 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
             <SidebarInset>
                  <header className="sticky top-0 z-20 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
                     <SidebarTrigger className="sm:hidden" />
+                    {activeNavItem && (
+                      <h1 className="text-xl font-bold">{activeNavItem.label}</h1>
+                    )}
                     <div className="flex-grow" />
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -127,7 +132,7 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
                         </DropdownMenuContent>
                     </DropdownMenu>
                  </header>
-                 <div className="flex-1 overflow-hidden p-4">
+                 <div className="flex-1 overflow-auto px-2 pb-2">
                     {children}
                  </div>
             </SidebarInset>

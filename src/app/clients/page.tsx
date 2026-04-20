@@ -124,7 +124,7 @@ function ClientPageContent() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-2 px-2 pb-2">
+    <div className="h-full flex flex-col gap-2 pt-0 pb-2 px-2">
         {!isConnected && (
             <div className="flex-1 flex items-center justify-center">
                 <Card className="max-w-md mx-auto w-full">
@@ -146,12 +146,6 @@ function ClientPageContent() {
 
         {isConnected && (
             <>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-bold">Quickbooks</h1>
-                        <p className="text-sm text-muted-foreground">View your QuickBooks financial data at a glance.</p>
-                    </div>
-                </div>
                 <Card>
                     <CardHeader className="p-2 pb-2">
                         <CardTitle className="text-base">Report Filters</CardTitle>

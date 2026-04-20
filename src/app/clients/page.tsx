@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 
 function PageSkeleton() {
     return (
-        <div className="h-full flex flex-col gap-6">
+        <div className="h-full flex flex-col gap-4 p-4">
             <div className="flex items-center justify-between">
                 <div>
                     <Skeleton className="h-7 w-48 mb-2" />
@@ -28,15 +28,15 @@ function PageSkeleton() {
                 </div>
             </div>
              <Card>
-                <CardHeader>
-                    <Skeleton className="h-6 w-1/4" />
-                    <Skeleton className="h-4 w-2/4" />
+                <CardHeader className="p-4 pb-2">
+                    <Skeleton className="h-5 w-1/4 mb-1" />
+                    <Skeleton className="h-3 w-2/4" />
                 </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col md:flex-row items-center gap-4">
-                        <Skeleton className="h-10 w-[280px]" />
-                        <Skeleton className="h-10 w-[280px]" />
-                        <Skeleton className="h-10 w-32" />
+                <CardContent className="p-4 pt-2">
+                    <div className="flex flex-col md:flex-row items-center gap-2">
+                        <Skeleton className="h-9 w-full md:w-40" />
+                        <Skeleton className="h-9 w-full md:w-40" />
+                        <Skeleton className="h-9 w-24" />
                     </div>
                 </CardContent>
             </Card>
@@ -124,7 +124,7 @@ function ClientPageContent() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-6">
+    <div className="h-full flex flex-col gap-4 p-4">
         {!isConnected && (
             <div className="flex-1 flex items-center justify-center">
                 <Card className="max-w-md mx-auto w-full">
@@ -153,21 +153,22 @@ function ClientPageContent() {
                     </div>
                 </div>
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Report Filters</CardTitle>
-                        <CardDescription>Select a date range to view your financial reports.</CardDescription>
+                    <CardHeader className="p-4 pb-2">
+                        <CardTitle className="text-lg">Report Filters</CardTitle>
+                        <CardDescription className="text-xs">Select a date range to view your financial reports.</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex flex-col md:flex-row items-center gap-4">
+                    <CardContent className="p-4 pt-2 flex flex-col md:flex-row items-center gap-2">
                         <Popover>
                             <PopoverTrigger asChild>
                             <Button
                                 variant={"outline"}
+                                size="sm"
                                 className={cn(
-                                "w-full md:w-[280px] justify-start text-left font-normal",
+                                "w-full md:w-auto justify-start text-left font-normal text-xs",
                                 !startDate && "text-muted-foreground"
                                 )}
                             >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                <CalendarIcon className="mr-1 h-3.5 w-3.5" />
                                 {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
                             </Button>
                             </PopoverTrigger>
@@ -184,12 +185,13 @@ function ClientPageContent() {
                             <PopoverTrigger asChild>
                             <Button
                                 variant={"outline"}
+                                size="sm"
                                 className={cn(
-                                "w-full md:w-[280px] justify-start text-left font-normal",
+                                "w-full md:w-auto justify-start text-left font-normal text-xs",
                                 !endDate && "text-muted-foreground"
                                 )}
                             >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                <CalendarIcon className="mr-1 h-3.5 w-3.5" />
                                 {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
                             </Button>
                             </PopoverTrigger>
@@ -202,7 +204,7 @@ function ClientPageContent() {
                             />
                             </PopoverContent>
                         </Popover>
-                        <Button onClick={fetchDashboardData} disabled={loading} className="w-full md:w-auto">
+                        <Button onClick={fetchDashboardData} disabled={loading} size="sm" className="w-full md:w-auto text-xs">
                             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</> : 'Run Report'}
                         </Button>
                     </CardContent>
@@ -221,7 +223,7 @@ function ClientPageContent() {
 
                 <div className="flex-1 min-h-0">
                     {loading ? (
-                         <div className="h-full flex flex-col gap-6">
+                         <div className="h-full flex flex-col">
                             <Skeleton className="h-full w-full" />
                         </div>
                     ) : data ? (

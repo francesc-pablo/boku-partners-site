@@ -127,7 +127,7 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
                         </DropdownMenuContent>
                     </DropdownMenu>
                  </header>
-                 <div className="flex-1 overflow-hidden p-6">
+                 <div className="flex-1 overflow-hidden p-4">
                     {children}
                  </div>
             </SidebarInset>

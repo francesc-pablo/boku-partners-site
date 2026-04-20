@@ -22,8 +22,13 @@ export function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const [hidden, setHidden] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const lastScrollY = useRef(0);
   const headerHeight = 80; // h-20 is 5rem which is 80px
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,7 +82,7 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-               {!isUserLoading && user && (
+               {hasMounted && !isUserLoading && user && (
                 <Button onClick={handleLogout} variant="outline" size="sm">Logout</Button>
               )}
             </nav>

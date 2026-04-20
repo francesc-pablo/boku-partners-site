@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, Plus, Minus } from 'lucide-react';
@@ -32,6 +32,12 @@ export function MobileNav({ navLinks }: MobileNavProps) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -115,7 +121,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
         </nav>
         
         <div className="mt-auto p-6 border-t">
-            {!isUserLoading && user && (
+            {hasMounted && !isUserLoading && user && (
             <Button onClick={handleLogout} variant="outline" className="w-full">Logout</Button>
           )}
         </div>

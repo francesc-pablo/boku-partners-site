@@ -20,7 +20,13 @@ import { Button } from '@/components/ui/button';
 
 function PageSkeleton() {
     return (
-        <div className="space-y-6">
+        <div className="h-full flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <Skeleton className="h-7 w-48 mb-2" />
+                    <Skeleton className="h-5 w-72" />
+                </div>
+            </div>
              <Card>
                 <CardHeader>
                     <Skeleton className="h-6 w-1/4" />
@@ -34,7 +40,9 @@ function PageSkeleton() {
                     </div>
                 </CardContent>
             </Card>
-            <Skeleton className="h-96" />
+            <div className="flex-1 min-h-0">
+                <Skeleton className="h-full w-full" />
+            </div>
         </div>
     );
 }
@@ -52,10 +60,9 @@ function ClientPageContent() {
   const { user } = useUser();
   const { portalUser, isLoading: isPortalUserLoading } = usePortalUser(user?.uid);
   
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date(new Date().getFullYear(), 0, 1));
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 6, 1));
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   
-  // Fetch the QuickBooks integration details for the current client
   const qbIntegrationQuery = useMemoFirebase(() => {
     if (!firestore || !portalUser?.clientId) return null;
     return query(collection(firestore, 'clients', portalUser.clientId, 'quickBooksIntegration'), limit(1));
@@ -105,7 +112,6 @@ function ClientPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    // Auto-fetch data once connection status is confirmed
     if (isConnected && !data) {
         fetchDashboardData();
     }
@@ -118,32 +124,31 @@ function ClientPageContent() {
   }
 
   return (
-    <>
+    <div className="h-full flex flex-col gap-6">
         {!isConnected && (
-            <div className="flex flex-col items-center justify-center gap-8 text-center h-[60vh]">
-            {error && <Alert variant="destructive" className="max-w-2xl"><AlertTitle>Connection Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
-            
-            <Card className="max-w-md mx-auto w-full">
-                <CardHeader className="text-center">
-                <CardTitle>Connect to QuickBooks</CardTitle>
-                <CardDescription>
-                    To view your financial dashboard, you need to connect your QuickBooks Online account.
-                </CardDescription>
-                </CardHeader>
-                <CardContent className="flex justify-center">
-                <Button asChild>
-                    <a href={`/api/auth/connect?clientId=${portalUser?.clientId}`}>Connect to QuickBooks</a>
-                </Button>
-                </CardContent>
-            </Card>
-          </div>
+            <div className="flex-1 flex items-center justify-center">
+                <Card className="max-w-md mx-auto w-full">
+                    <CardHeader className="text-center">
+                        <CardTitle>Connect to QuickBooks</CardTitle>
+                        <CardDescription>
+                            To view your financial dashboard, you need to connect your QuickBooks Online account.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-center">
+                        <Button asChild>
+                            <a href={`/api/auth/connect?clientId=${portalUser?.clientId}`}>Connect to QuickBooks</a>
+                        </Button>
+                    </CardContent>
+                    {error && <Alert variant="destructive" className="m-4 mt-0"><AlertTitle>Connection Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription></Alert>}
+                </Card>
+            </div>
         )}
 
         {isConnected && (
-            <div className="space-y-6">
+            <>
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold">Dashboard</h1>
+                        <h1 className="text-2xl font-bold">Quickbooks</h1>
                         <p className="text-muted-foreground">View your QuickBooks financial data at a glance.</p>
                     </div>
                 </div>
@@ -158,7 +163,7 @@ function ClientPageContent() {
                             <Button
                                 variant={"outline"}
                                 className={cn(
-                                "w-[280px] justify-start text-left font-normal",
+                                "w-full md:w-[280px] justify-start text-left font-normal",
                                 !startDate && "text-muted-foreground"
                                 )}
                             >
@@ -180,7 +185,7 @@ function ClientPageContent() {
                             <Button
                                 variant={"outline"}
                                 className={cn(
-                                "w-[280px] justify-start text-left font-normal",
+                                "w-full md:w-[280px] justify-start text-left font-normal",
                                 !endDate && "text-muted-foreground"
                                 )}
                             >
@@ -197,14 +202,14 @@ function ClientPageContent() {
                             />
                             </PopoverContent>
                         </Popover>
-                        <Button onClick={fetchDashboardData} disabled={loading}>
+                        <Button onClick={fetchDashboardData} disabled={loading} className="w-full md:w-auto">
                             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</> : 'Run Report'}
                         </Button>
                     </CardContent>
                 </Card>
-
+                
                 {success && <Alert><AlertTitle>Success!</AlertTitle><AlertDescription>{success}</AlertDescription></Alert>}
-                {error && <Alert variant="destructive" className="max-w-2xl mx-auto"><AlertTitle>Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}
+                {error && <Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription className="whitespace-pre-wrap">{error}
                     {authError && (
                         <div className="mt-4">
                             <Button asChild>
@@ -214,14 +219,22 @@ function ClientPageContent() {
                     )}
                 </AlertDescription></Alert>}
 
-                {loading ? <PageSkeleton /> : data ? <ClientDashboard data={data} /> : (
-                    <div className="text-center p-8 border rounded-lg">
-                        <p>No data to display for the selected period. Run a report to see your data.</p>
-                    </div>
-                )}
-            </div>
+                <div className="flex-1 min-h-0">
+                    {loading ? (
+                         <div className="h-full flex flex-col gap-6">
+                            <Skeleton className="h-full w-full" />
+                        </div>
+                    ) : data ? (
+                        <ClientDashboard data={data} />
+                    ) : (
+                        <div className="text-center p-8 border rounded-lg h-full flex items-center justify-center">
+                            <p>No data to display for the selected period. Run a report to see your data.</p>
+                        </div>
+                    )}
+                </div>
+            </>
         )}
-    </>
+    </div>
   );
 }
 

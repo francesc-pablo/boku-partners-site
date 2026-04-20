@@ -1,20 +1,8 @@
 'use server';
 
-import admin from 'firebase-admin';
-
-// This function ensures the Firebase Admin SDK is initialized.
-// It's idempotent, meaning it's safe to call multiple times.
-function ensureAdminInitialized() {
-  if (!admin.apps.length) {
-    // In a managed environment like App Hosting, initializeApp() with no arguments
-    // should automatically discover credentials.
-    admin.initializeApp();
-  }
-}
+import { adminAuth } from '@/lib/firebase-admin';
 
 export async function createUserByAdmin(formData: FormData) {
-    ensureAdminInitialized();
-
     const email = formData.get('email') as string;
 
     if (!email) {
@@ -23,7 +11,7 @@ export async function createUserByAdmin(formData: FormData) {
 
     try {
         // Create the user in Firebase Auth using the Admin SDK.
-        const userRecord = await admin.auth().createUser({
+        const userRecord = await adminAuth.createUser({
             email,
             emailVerified: false, // User will verify when they set password
         });

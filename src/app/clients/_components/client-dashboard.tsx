@@ -12,6 +12,26 @@ type ReportData = {
   error?: string;
 };
 
+const numberFormatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatCell = (value: string | undefined, isNumeric: boolean) => {
+  if (value === undefined || value === null) {
+    return '';
+  }
+  if (!isNumeric) {
+    return value;
+  }
+  const num = parseFloat(String(value).replace(/,/g, ''));
+  if (!isNaN(num)) {
+    return numberFormatter.format(num);
+  }
+  return value;
+};
+
+
 const ReportRow = ({ row, level = 0, columnsCount }: { row: any; level?: number; columnsCount: number }) => {
   const isHeader = !!row.Header;
   const isSummary = !!row.Summary;
@@ -48,7 +68,7 @@ const ReportRow = ({ row, level = 0, columnsCount }: { row: any; level?: number;
             )}
             style={{ paddingLeft: index === 0 ? `${0.75 + level * 1.25}rem` : '0.5rem' }}
           >
-            {col?.value}
+            {formatCell(col?.value, index > 0)}
           </TableCell>
         ))}
       </TableRow>

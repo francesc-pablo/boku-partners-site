@@ -6,7 +6,7 @@
  * All data for a specific client is nested under `/clients/{clientId}`, ensuring that users
  * from one client can never access data from another. Within each client's data partition,
  * a Role-Based Access Control (RBAC) system is used, distinguishing between 'Admin', 'Boku_Access',
- * and 'StandardUser' roles.
+ * and 'Client_Access' roles.
  *
  * Data Structure:
  * - /clients/{clientId}: The root document for a single client tenant.
@@ -17,7 +17,7 @@
  * - Strict Tenant Isolation: All rules verify that the requesting user belongs to the `clientId`
  *   specified in the document path, preventing any cross-tenant data access.
  * - Role-Based Management: 'Admin' users can manage any user. 'Boku_Access' users can manage
- *   'StandardUser' accounts, providing a middle tier of administrative capability.
+ *   'Client_Access' accounts, providing a middle tier of administrative capability.
  * - User Self-Service: Users can view and update their own profile information.
  * - Deny by Default: Listing all clients is disallowed, and creation/deletion of top-level
  *   client documents is restricted, assuming these are backend-controlled operations.
@@ -94,17 +94,17 @@ service cloud.firestore {
       // List: Admin and Boku_Access can list all users in the client.
       allow list: if isClientAdmin(clientId) || isBokuAccess(clientId);
 
-      // Create: Admin can create any role. Boku_Access can only create StandardUser. Data must be valid.
-      allow create: if (isClientAdmin(clientId) || (isBokuAccess(clientId) && request.resource.data.role == 'StandardUser'))
+      // Create: Admin can create any role. Boku_Access can only create Client_Access. Data must be valid.
+      allow create: if (isClientAdmin(clientId) || (isBokuAccess(clientId) && request.resource.data.role == 'Client_Access'))
                     && isPortalUserDataValidOnCreate(clientId, portalUserId);
 
-      // Update: Owner can update self. Admin can update anyone. Boku_Access can update StandardUser. Data and roles must be valid.
-      allow update: if (isOwner(portalUserId) || isClientAdmin(clientId) || (isBokuAccess(clientId) && resource.data.role == 'StandardUser')) 
+      // Update: Owner can update self. Admin can update anyone. Boku_Access can update Client_Access. Data and roles must be valid.
+      allow update: if (isOwner(portalUserId) || isClientAdmin(clientId) || (isBokuAccess(clientId) && resource.data.role == 'Client_Access')) 
                     && arePortalUserFieldsValidOnUpdate(clientId);
       
-      // Delete: Admin can delete anyone (but not themselves). Boku_Access can delete StandardUser.
+      // Delete: Admin can delete anyone (but not themselves). Boku_Access can delete Client_Access.
       allow delete: if (isClientAdmin(clientId) && !isOwner(portalUserId)) || 
-                     (isBokuAccess(clientId) && resource.data.role == 'StandardUser');
+                     (isBokuAccess(clientId) && resource.data.role == 'Client_Access');
     }
     
     match /oauth_states/{stateId} {

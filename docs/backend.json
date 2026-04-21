@@ -55,11 +55,11 @@
         },
         "role": {
           "type": "string",
-          "description": "The role assigned to the user. 'Admin' has full control. 'Boku_Access' can manage standard users. 'StandardUser' has regular access.",
+          "description": "The role assigned to the user. 'Admin' has full control. 'Boku_Access' can manage client access users. 'Client_Access' has regular access.",
           "enum": [
             "Admin",
             "Boku_Access",
-            "StandardUser"
+            "Client_Access"
           ]
         },
         "firstName": {

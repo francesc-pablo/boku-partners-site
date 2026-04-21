@@ -96,7 +96,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
   const canPerformAction = (targetUser: PortalUser) => {
     if (adminUser.id === targetUser.id) return false;
     if (adminUser.role === 'Admin') return true;
-    if (adminUser.role === 'Boku_Access' && targetUser.role === 'StandardUser') return true;
+    if (adminUser.role === 'Boku_Access' && targetUser.role === 'Client_Access') return true;
     return false;
   };
 
@@ -107,10 +107,10 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const clientId = formData.get('clientId') as string;
-    const role = formData.get('role') as 'Admin' | 'Boku_Access' | 'StandardUser';
+    const role = formData.get('role') as 'Admin' | 'Boku_Access' | 'Client_Access';
     
-    if (adminUser.role === 'Boku_Access' && role !== 'StandardUser') {
-        toast({ title: 'Permission Denied', description: 'You can only create Standard Users.', variant: 'destructive' });
+    if (adminUser.role === 'Boku_Access' && role !== 'Client_Access') {
+        toast({ title: 'Permission Denied', description: 'You can only create Client Access users.', variant: 'destructive' });
         setIsAddPending(false);
         return;
     }
@@ -187,7 +187,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
         firstName: formData.get('firstName') as string,
         lastName: formData.get('lastName') as string,
         company: formData.get('company') as string,
-        role: formData.get('role') as 'Admin' | 'Boku_Access' | 'StandardUser',
+        role: formData.get('role') as 'Admin' | 'Boku_Access' | 'Client_Access',
     };
     
     if (adminUser.role !== 'Admin' && updates.role !== userToEdit.role) {
@@ -353,14 +353,14 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="add-role" className="text-right">Role</Label>
-                             <Select name="role" defaultValue="StandardUser">
+                             <Select name="role" defaultValue="Client_Access">
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {adminUser.role === 'Admin' && <SelectItem value="Admin">Admin</SelectItem>}
                                     {adminUser.role === 'Admin' && <SelectItem value="Boku_Access">Boku Access</SelectItem>}
-                                    <SelectItem value="StandardUser">Standard User</SelectItem>
+                                    <SelectItem value="Client_Access">Client Access</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -410,7 +410,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                                 <SelectContent>
                                     <SelectItem value="Admin">Admin</SelectItem>
                                     <SelectItem value="Boku_Access">Boku Access</SelectItem>
-                                    <SelectItem value="StandardUser">Standard User</SelectItem>
+                                    <SelectItem value="Client_Access">Client Access</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

@@ -6,7 +6,7 @@ export interface PortalUser {
     id: string;
     clientId: string;
     email: string;
-    role: 'Admin' | 'Boku_Access' | 'StandardUser';
+    role: 'Admin' | 'Boku_Access' | 'Client_Access';
     firstName: string;
     lastName: string;
     company?: string;

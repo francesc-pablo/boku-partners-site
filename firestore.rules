@@ -40,12 +40,7 @@ service cloud.firestore {
 
     function getRequestingUserRole(clientId) {
       let userDocPath = /databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid);
-      // The `get` is allowed by the `get` rule, which lets a user read their own document.
-      let userDoc = get(userDocPath);
-      if (exists(userDocPath)) {
-        return userDoc.data.role;
-      }
-      return null;
+      return exists(userDocPath) ? get(userDocPath).data.role : null;
     }
     
     function isClientAdmin(clientId) {

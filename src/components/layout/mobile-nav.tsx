@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, Plus, Minus } from 'lucide-react';
@@ -31,7 +31,17 @@ export function MobileNav({ navLinks }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
+<<<<<<< HEAD
   const { auth } = useFirebase();
+=======
+  const auth = useAuth();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+>>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
 
   const handleLogout = async () => {
     if (auth) {
@@ -117,7 +127,7 @@ export function MobileNav({ navLinks }: MobileNavProps) {
         </nav>
         
         <div className="mt-auto p-6 border-t">
-            {!isUserLoading && user && (
+            {hasMounted && !isUserLoading && user && (
             <Button onClick={handleLogout} variant="outline" className="w-full">Logout</Button>
           )}
         </div>

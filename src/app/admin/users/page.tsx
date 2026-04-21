@@ -28,10 +28,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-        <div className="flex items-center justify-between">
-            <div>
-                <p className="text-muted-foreground">Manage user roles and access for your client account.</p>
-            </div>
+        <div className="flex items-center justify-end">
             <Button onClick={() => setShowAddUserDialog(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add User

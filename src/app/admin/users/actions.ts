@@ -1,6 +1,6 @@
 'use server';
 
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 
 export async function createUserByAdmin(formData: FormData) {
     const email = formData.get('email') as string;
@@ -8,6 +8,8 @@ export async function createUserByAdmin(formData: FormData) {
     if (!email) {
         return { success: false, message: 'Email is required.' };
     }
+
+    const adminAuth = getAdminAuth();
 
     try {
         // Create the user in Firebase Auth using the Admin SDK.

@@ -11,7 +11,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { usePortalUser } from '@/hooks/use-portal-user';
 import { collection, query, limit } from 'firebase/firestore';
 import { getDashboardData } from './actions';

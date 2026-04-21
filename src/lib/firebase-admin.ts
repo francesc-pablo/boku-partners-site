@@ -1,32 +1,43 @@
 import admin from 'firebase-admin';
 import { App } from 'firebase-admin/app';
 
-// This file is NOT marked with 'use server'. It's a server-side module.
-
 let app: App;
 
-/**
- * Ensures that the Firebase Admin SDK is initialized, but only once.
- */
-function ensureAdminInitialized() {
-  if (!admin.apps.length) {
-    try {
-      // In a managed environment like App Hosting or Cloud Functions,
-      // this will automatically discover the credentials.
-      app = admin.initializeApp();
-    } catch (e) {
-      console.error("Firebase Admin SDK initialization error:", e);
-      // If initialization fails, it indicates a fundamental environment setup issue.
-      throw new Error("Could not initialize Firebase Admin SDK. Ensure the environment is set up correctly with Application Default Credentials.");
-    }
-  } else {
-    app = admin.app();
+function initializeAdminSDK() {
+  if (admin.apps.length > 0) {
+    return admin.app();
   }
+
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+
+  if (projectId && clientEmail && privateKey) {
+    console.log("Initializing Firebase Admin with explicit credentials from environment variables.");
+    return admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId,
+        clientEmail,
+        privateKey: privateKey.replace(/\\n/g, '\n'),
+      }),
+    });
+  }
+
+  console.log("Initializing Firebase Admin with Application Default Credentials.");
+  return admin.initializeApp();
 }
 
-// Initialize the SDK when this module is first loaded.
-ensureAdminInitialized();
+function getAdminApp() {
+  if (!app) {
+    app = initializeAdminSDK();
+  }
+  return app;
+}
 
-// Export the initialized services for use in other server-side modules.
-export const adminAuth = admin.auth();
-export const adminDb = admin.firestore();
+export function getAdminAuth() {
+  return getAdminApp().auth();
+}
+
+export function getAdminDb() {
+  return getAdminApp().firestore();
+}

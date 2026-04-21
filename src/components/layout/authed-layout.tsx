@@ -1,7 +1,7 @@
 'use client';
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth } from '@/firebase/client-provider';
 import { usePortalUser } from '@/hooks/use-portal-user';
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect } from "react";

@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@/firebase';
+import { useUser } from '@/firebase/client-provider';
 import { usePortalUser } from '@/hooks/use-portal-user';
 import { useState } from 'react';
 import { PlusCircle } from 'lucide-react';

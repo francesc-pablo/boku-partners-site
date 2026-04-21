@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useUser } from '@/firebase/client-provider';
 import { Loader2 } from 'lucide-react';
 import { LoginForm } from './_components/login-form';
 

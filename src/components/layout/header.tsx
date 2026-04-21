@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { MobileNav } from './mobile-nav';
 import { useState, useEffect, useRef } from 'react';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth } from '@/firebase/client-provider';
 import { Button } from '../ui/button';
 
 const navLinks = [

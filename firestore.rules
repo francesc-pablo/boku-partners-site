@@ -39,8 +39,9 @@ service cloud.firestore {
     }
 
     function getRequestingUserRole(clientId) {
-      let userDocPath = /databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid);
-      return exists(userDocPath) ? get(userDocPath).data.role : null;
+      return exists(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid)).data.role
+        : null;
     }
     
     function isClientAdmin(clientId) {
@@ -57,18 +58,13 @@ service cloud.firestore {
     }
     
     function isPortalUserDataValidOnCreate(clientId, portalUserId) {
-      let incomingData = request.resource.data;
-      return incomingData.clientId == clientId && incomingData.id == portalUserId;
+      return request.resource.data.clientId == clientId && request.resource.data.id == portalUserId;
     }
 
     function arePortalUserFieldsValidOnUpdate(clientId) {
-      let incomingData = request.resource.data;
-      let existingData = resource.data;
-      let roleIsChanging = incomingData.role != existingData.role;
-
-      return incomingData.clientId == existingData.clientId 
-          && incomingData.id == existingData.id
-          && (!roleIsChanging || isClientAdmin(clientId)); // Only admins can change roles
+      return request.resource.data.clientId == resource.data.clientId
+          && request.resource.data.id == resource.data.id
+          && (request.resource.data.role == resource.data.role || isClientAdmin(clientId)); // Only admins can change roles
     }
 
 

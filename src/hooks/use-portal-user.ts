@@ -1,6 +1,6 @@
 'use client';
 
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useMemoFirebase, useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
 export interface PortalUser {
@@ -50,5 +50,3 @@ export function usePortalUser(uid: string | undefined) {
         error: mapError || userError,
     };
 }
-
-    

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/accordion';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { services } from '@/lib/services';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth } from '@/firebase/client-provider';
 
 
 type NavLink = {

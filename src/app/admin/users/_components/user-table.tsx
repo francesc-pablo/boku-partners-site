@@ -122,6 +122,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
         }
         const { newUserUid } = serverResult;
 
+<<<<<<< HEAD
         const portalUserRef = doc(firestore, 'clients', clientId, 'portalUsers', newUserUid);
         const portalUserData = {
             id: newUserUid,
@@ -173,20 +174,83 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     } finally {
         setIsAddPending(false);
     }
+=======
+    // 2. Perform client-side writes and email sending.
+    const portalUserRef = doc(firestore, 'clients', clientId as string, 'portalUsers', newUserUid);
+    const portalUserData = {
+        id: newUserUid,
+        clientId: clientId as string,
+        email: email,
+        role: role as 'Admin' | 'Boku_Access' | 'Client_Access',
+        firstName: firstName as string,
+        lastName: lastName as string,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+    
+    // Using a promise chain to handle sequential operations and error handling
+    setDoc(portalUserRef, portalUserData)
+      .catch(err => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: portalUserRef.path,
+              operation: 'create',
+              requestResourceData: portalUserData
+          }));
+          // Re-throw to break the promise chain
+          throw new Error('Failed to create user profile in Firestore.'); 
+      })
+      .then(() => {
+          const userClientMapRef = doc(firestore, 'user_to_client_map', newUserUid);
+          const userClientMapData = { clientId: clientId as string };
+          return setDoc(userClientMapRef, userClientMapData).catch(err => {
+              errorEmitter.emit('permission-error', new FirestorePermissionError({
+                  path: userClientMapRef.path,
+                  operation: 'create',
+                  requestResourceData: userClientMapData
+              }));
+              throw new Error('Failed to create user-to-client map.');
+          });
+      })
+      .then(() => {
+          return sendPasswordResetEmail(auth, email);
+      })
+      .then(() => {
+          toast({ title: 'Success', description: 'User created successfully. They have been sent an email to set their password.' });
+          setShowAddUserDialog(false);
+      })
+      .catch(err => {
+          // This catches errors from the chain.
+          // Permission errors are already emitted. The listener will throw them.
+          // We only toast other, unexpected errors.
+          if (!err.message.startsWith('Failed to create')) {
+            toast({ title: 'An Error Occurred', description: err.message, variant: 'destructive' });
+          }
+      })
+      .finally(() => {
+          setIsAddPending(false);
+      });
+>>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
   };
 
 
   const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!userToEdit) return;
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
     setIsUpdatePending(true);
 
     const formData = new FormData(e.currentTarget);
     const updates = {
         firstName: formData.get('firstName') as string,
         lastName: formData.get('lastName') as string,
+<<<<<<< HEAD
         company: formData.get('company') as string,
+=======
+>>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
         role: formData.get('role') as 'Admin' | 'Boku_Access' | 'Client_Access',
     };
     
@@ -277,16 +341,29 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
           </TableHeader>
           <TableBody>
             {users && users.length > 0 ? (
-              users.map((user) => (
+              users.map((user) => {
+                const showActions = user.id !== adminUser.id && (
+                  adminUser.role === 'Admin' || 
+                  (adminUser.role === 'Boku_Access' && user.role === 'Client_Access')
+                );
+
+                return (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.firstName} {user.lastName}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.company}</TableCell>
                   <TableCell>
+<<<<<<< HEAD
                     <Badge variant={user.role === 'Admin' ? 'default' : user.role === 'Boku_Access' ? 'outline' : 'secondary'}>{user.role.replace('_', ' ')}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                      {canPerformAction(user) && (
+=======
+                    <Badge variant={user.role === 'Admin' ? 'default' : user.role === 'Boku_Access' ? 'secondary' : 'outline'}>{user.role.replace('_', ' ')}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                     {showActions && (
+>>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
                         <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -310,7 +387,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                      )}
                   </TableCell>
                 </TableRow>
-              ))
+              )})
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
@@ -358,6 +435,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
+<<<<<<< HEAD
                                      {adminUser.role === 'Admin' ? (
                                         <>
                                             <SelectItem value="Admin">Admin</SelectItem>
@@ -367,6 +445,11 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                                     ) : (
                                         <SelectItem value="Client_Access">Client Access</SelectItem>
                                     )}
+=======
+                                    {adminUser.role === 'Admin' && <SelectItem value="Admin">Admin</SelectItem>}
+                                    {adminUser.role === 'Admin' && <SelectItem value="Boku_Access">Boku Access</SelectItem>}
+                                    <SelectItem value="Client_Access">Client Access</SelectItem>
+>>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
                                 </SelectContent>
                             </Select>
                         </div>
@@ -409,7 +492,11 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="role" className="text-right">Role</Label>
+<<<<<<< HEAD
                              <Select name="role" defaultValue={userToEdit?.role} disabled={adminUser.role !== 'Admin'}>
+=======
+                             <Select name="role" defaultValue={userToEdit?.role} disabled={adminUser.role === 'Boku_Access'}>
+>>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
@@ -456,3 +543,5 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     </>
   );
 }
+
+    

@@ -1,5 +1,6 @@
 // This file acts as a barrel file for Firebase-related modules.
 
+<<<<<<< HEAD
 // Re-export the core provider and hooks from the client-provider.
 export {
   FirebaseClientProvider,
@@ -14,3 +15,38 @@ export {
   useDoc,
   type UserHookResult,
 } from './client-provider';
+=======
+import { firebaseConfig } from '@/firebase/config';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore'
+
+export function initializeFirebase() {
+  if (!getApps().length) {
+    // For local development and to ensure consistency in this environment,
+    // we explicitly use the config object.
+    const firebaseApp = initializeApp(firebaseConfig);
+    return getSdks(firebaseApp);
+  }
+
+  // If already initialized, return the SDKs with the already initialized App
+  return getSdks(getApp());
+}
+
+export function getSdks(firebaseApp: FirebaseApp) {
+  return {
+    firebaseApp,
+    auth: getAuth(firebaseApp),
+    firestore: getFirestore(firebaseApp)
+  };
+}
+
+export * from './provider';
+export * from './client-provider';
+export * from './firestore/use-collection';
+export * from './firestore/use-doc';
+export * from './non-blocking-updates';
+export * from './non-blocking-login';
+export * from './errors';
+export * from './error-emitter';
+>>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544

@@ -85,6 +85,10 @@ export async function GET(req: Request) {
       updatedAt: Timestamp.now()
     });
     
+    // Update the client document to reflect the connection status.
+    const clientRef = firestore.collection('clients').doc(clientId);
+    await clientRef.update({ isQuickBooksConnected: true });
+
     const successUrl = new URL('/clients', origin);
     successUrl.searchParams.set('success', 'true');
     return NextResponse.redirect(successUrl);

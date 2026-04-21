@@ -11,9 +11,8 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, useDoc, useFirestoreFns } from '@/firebase';
 import { usePortalUser } from '@/hooks/use-portal-user';
-import { collection, query, limit } from 'firebase/firestore';
 import { getDashboardData } from './actions';
 import { Button } from '@/components/ui/button';
 
@@ -56,6 +55,7 @@ function ClientPageContent() {
   
   const searchParams = useSearchParams();
   const firestore = useFirestore();
+  const { doc } = useFirestoreFns();
 
   const { user } = useUser();
   const { portalUser, isLoading: isPortalUserLoading } = usePortalUser(user?.uid);
@@ -63,13 +63,13 @@ function ClientPageContent() {
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 6, 1));
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   
-  const qbIntegrationQuery = useMemoFirebase(() => {
-    if (!firestore || !portalUser?.clientId) return null;
-    return query(collection(firestore, 'clients', portalUser.clientId, 'quickBooksIntegration'), limit(1));
-  }, [firestore, portalUser?.clientId]);
+  const clientDocRef = useMemoFirebase(() => {
+    if (!firestore || !portalUser?.clientId || !doc) return null;
+    return doc(firestore, 'clients', portalUser.clientId);
+  }, [firestore, portalUser?.clientId, doc]);
 
-  const { data: qbIntegration, isLoading: isQbLoading } = useCollection(qbIntegrationQuery);
-  const isConnected = qbIntegration ? qbIntegration.length > 0 : false;
+  const { data: clientData, isLoading: isClientLoading } = useDoc<{isQuickBooksConnected?: boolean}>(clientDocRef);
+  const isConnected = clientData?.isQuickBooksConnected ?? false;
   
   const fetchDashboardData = useCallback(async () => {
     if (!startDate || !endDate || !portalUser?.clientId) return;
@@ -112,12 +112,17 @@ function ClientPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (isConnected && !data) {
+    // If we have determined connection status, and it is connected, and we don't have data yet
+    if (!isClientLoading && isConnected && !data) {
         fetchDashboardData();
+    } 
+    // If we have determined connection status and it is not connected, we can stop the main page loader.
+    else if (!isClientLoading && !isConnected) {
+        setLoading(false);
     }
-  }, [isConnected, data, fetchDashboardData]);
+  }, [isConnected, isClientLoading, data, fetchDashboardData]);
 
-  const pageLoading = isPortalUserLoading || isQbLoading;
+  const pageLoading = isPortalUserLoading || isClientLoading;
 
   if (pageLoading) {
     return <PageSkeleton />;

@@ -14,9 +14,9 @@
           "type": "string",
           "description": "The official business name of the client organization."
         },
-        "quickBooksIntegrationId": {
-          "type": "string",
-          "description": "Reference to the QuickBooksIntegration entity, representing this client's connection to QuickBooks. (Relationship: Client 1:1 QuickBooksIntegration)"
+        "isQuickBooksConnected": {
+          "type": "boolean",
+          "description": "Flag indicating if a QuickBooks integration is active for this client."
         },
         "createdAt": {
           "type": "string",

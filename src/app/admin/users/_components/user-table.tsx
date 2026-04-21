@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { PortalUser } from '@/hooks/use-portal-user';
 import { collection, query, doc, setDoc, serverTimestamp, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -103,77 +103,78 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
   const handleAddUserSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsAddPending(true);
-
+    
     const formData = new FormData(e.currentTarget);
-    const { firstName, lastName, role, clientId, company, email: formEmail } = Object.fromEntries(formData.entries());
-
+    const email = formData.get('email') as string;
+    const clientId = formData.get('clientId') as string;
+    const role = formData.get('role') as 'Admin' | 'Boku_Access' | 'StandardUser';
+    
     if (adminUser.role === 'Boku_Access' && role !== 'StandardUser') {
         toast({ title: 'Permission Denied', description: 'You can only create Standard Users.', variant: 'destructive' });
         setIsAddPending(false);
         return;
     }
 
-    const serverResult = await createUserByAdmin(formData);
+    try {
+        const serverResult = await createUserByAdmin(formData);
+        if (!serverResult.success || !serverResult.newUserUid) {
+            throw new Error(serverResult.message || 'Server action to create auth user failed.');
+        }
+        const { newUserUid } = serverResult;
 
-    if (!serverResult.success || !serverResult.newUserUid) {
-      toast({ title: 'Error', description: serverResult.message, variant: 'destructive' });
-      setIsAddPending(false);
-      return;
+        const portalUserRef = doc(firestore, 'clients', clientId, 'portalUsers', newUserUid);
+        const portalUserData = {
+            id: newUserUid,
+            clientId: clientId,
+            email: email,
+            role: role,
+            firstName: formData.get('firstName') as string,
+            lastName: formData.get('lastName') as string,
+            company: formData.get('company') as string,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        };
+
+        try {
+            await setDoc(portalUserRef, portalUserData);
+        } catch (error) {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: portalUserRef.path,
+                operation: 'create',
+                requestResourceData: portalUserData
+            }));
+            // Stop execution if Firestore write fails
+            return;
+        }
+
+        const userClientMapRef = doc(firestore, 'user_to_client_map', newUserUid);
+        const userClientMapData = { clientId: clientId };
+
+        try {
+            await setDoc(userClientMapRef, userClientMapData);
+        } catch (error) {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: userClientMapRef.path,
+                operation: 'create',
+                requestResourceData: userClientMapData
+            }));
+             // Stop execution if Firestore write fails
+            return;
+        }
+
+        await sendPasswordResetEmail(auth, email);
+        
+        toast({ title: 'Success', description: 'User created successfully. They have been sent an email to set their password.' });
+        setShowAddUserDialog(false);
+
+    } catch (err: any) {
+        // This outer catch handles errors from the server action or password reset email
+        toast({ title: 'An Error Occurred', description: err.message, variant: 'destructive' });
+    } finally {
+        setIsAddPending(false);
     }
-
-    const { newUserUid } = serverResult;
-    const email = formEmail as string;
-
-    const portalUserRef = doc(firestore, 'clients', clientId as string, 'portalUsers', newUserUid);
-    const portalUserData = {
-        id: newUserUid,
-        clientId: clientId as string,
-        email: email,
-        role: role as 'Admin' | 'Boku_Access' | 'StandardUser',
-        firstName: firstName as string,
-        lastName: lastName as string,
-        company: company as string,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    };
-    
-    setDoc(portalUserRef, portalUserData)
-      .catch(err => {
-          errorEmitter.emit('permission-error', new FirestorePermissionError({
-              path: portalUserRef.path,
-              operation: 'create',
-              requestResourceData: portalUserData
-          }));
-          throw new Error('Failed to create user profile in Firestore.'); 
-      })
-      .then(() => {
-          const userClientMapRef = doc(firestore, 'user_to_client_map', newUserUid);
-          const userClientMapData = { clientId: clientId as string };
-          return setDoc(userClientMapRef, userClientMapData).catch(err => {
-              errorEmitter.emit('permission-error', new FirestorePermissionError({
-                  path: userClientMapRef.path,
-                  operation: 'create',
-                  requestResourceData: userClientMapData
-              }));
-              throw new Error('Failed to create user-to-client map.');
-          });
-      })
-      .then(() => {
-          return sendPasswordResetEmail(auth, email);
-      })
-      .then(() => {
-          toast({ title: 'Success', description: 'User created successfully. They have been sent an email to set their password.' });
-          setShowAddUserDialog(false);
-      })
-      .catch(err => {
-          if (!(err instanceof FirestorePermissionError)) {
-            toast({ title: 'An Error Occurred', description: err.message, variant: 'destructive' });
-          }
-      })
-      .finally(() => {
-          setIsAddPending(false);
-      });
   };
+
 
   const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -449,5 +450,3 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     </>
   );
 }
-
-    

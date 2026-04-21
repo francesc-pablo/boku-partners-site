@@ -83,8 +83,9 @@ service cloud.firestore {
 
     match /user_to_client_map/{userId} {
       allow get: if isOwner(userId);
-      allow create: if isClientAdmin(request.resource.data.clientId);
-      allow delete: if isClientAdmin(resource.data.clientId);
+      // Admin or Boku_Access users can create the mapping record for a new user in their client.
+      allow create: if isClientAdmin(request.resource.data.clientId) || isBokuAccess(request.resource.data.clientId);
+      allow delete: if isClientAdmin(resource.data.clientId) || isBokuAccess(resource.data.clientId);
       allow list, update: if false;
     }
 
@@ -127,5 +128,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

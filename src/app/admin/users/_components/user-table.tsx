@@ -116,7 +116,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
         id: newUserUid,
         clientId: clientId as string,
         email: email,
-        role: role as 'Admin' | 'StandardUser',
+        role: role as 'Admin' | 'Boku_Access' | 'Client_Access',
         firstName: firstName as string,
         lastName: lastName as string,
         createdAt: serverTimestamp(),
@@ -170,20 +170,13 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     e.preventDefault();
     if (!userToEdit) return;
 
-    // Prevent admin from removing their own admin role if they are the last one.
-    // This is a simple client-side check. A more robust solution would be a server-side check.
-    if (userToEdit.id === adminUser.id && new FormData(e.currentTarget).get('role') !== 'Admin') {
-      toast({ title: 'Error', description: "You cannot remove your own Admin role.", variant: 'destructive' });
-      return;
-    }
-
     setIsUpdatePending(true);
 
     const formData = new FormData(e.currentTarget);
     const updates = {
         firstName: formData.get('firstName') as string,
         lastName: formData.get('lastName') as string,
-        role: formData.get('role') as 'Admin' | 'StandardUser',
+        role: formData.get('role') as 'Admin' | 'Boku_Access' | 'Client_Access',
     };
 
     if (!updates.firstName || !updates.lastName) {
@@ -268,15 +261,21 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
           </TableHeader>
           <TableBody>
             {users && users.length > 0 ? (
-              users.map((user) => (
+              users.map((user) => {
+                const showActions = user.id !== adminUser.id && (
+                  adminUser.role === 'Admin' || 
+                  (adminUser.role === 'Boku_Access' && user.role === 'Client_Access')
+                );
+
+                return (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.firstName} {user.lastName}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge>
+                    <Badge variant={user.role === 'Admin' ? 'default' : user.role === 'Boku_Access' ? 'secondary' : 'outline'}>{user.role.replace('_', ' ')}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                     {user.id !== adminUser.id && (
+                     {showActions && (
                         <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -300,7 +299,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                      )}
                   </TableCell>
                 </TableRow>
-              ))
+              )})
             ) : (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
@@ -339,13 +338,14 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="add-role" className="text-right">Role</Label>
-                             <Select name="role" defaultValue="StandardUser">
+                             <Select name="role" defaultValue="Client_Access">
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Admin">Admin</SelectItem>
-                                    <SelectItem value="StandardUser">Standard User</SelectItem>
+                                    {adminUser.role === 'Admin' && <SelectItem value="Admin">Admin</SelectItem>}
+                                    {adminUser.role === 'Admin' && <SelectItem value="Boku_Access">Boku Access</SelectItem>}
+                                    <SelectItem value="Client_Access">Client Access</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -384,13 +384,14 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="role" className="text-right">Role</Label>
-                             <Select name="role" defaultValue={userToEdit?.role}>
+                             <Select name="role" defaultValue={userToEdit?.role} disabled={adminUser.role === 'Boku_Access'}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Admin">Admin</SelectItem>
-                                    <SelectItem value="StandardUser">Standard User</SelectItem>
+                                    <SelectItem value="Boku_Access">Boku Access</SelectItem>
+                                    <SelectItem value="Client_Access">Client Access</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -430,3 +431,5 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     </>
   );
 }
+
+    

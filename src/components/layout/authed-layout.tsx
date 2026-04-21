@@ -67,7 +67,7 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
         );
     }
 
-    const isAdmin = portalUser.role === 'Admin';
+    const canManageUsers = portalUser.role === 'Admin' || portalUser.role === 'Boku_Access';
     const userInitial = portalUser.firstName ? portalUser.firstName.charAt(0) : portalUser.email.charAt(0);
 
     const navItems = [
@@ -86,7 +86,7 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
                 <SidebarContent>
                     <SidebarMenu>
                         {navItems.map((item) => (
-                            (!item.adminOnly || isAdmin) && (
+                            (!item.adminOnly || canManageUsers) && (
                                 <SidebarMenuItem key={item.href}>
                                     <SidebarMenuButton asChild tooltip={item.label} isActive={pathname.startsWith(item.href)}>
                                         <Link href={item.href}>
@@ -139,3 +139,5 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
         </SidebarProvider>
     );
 }
+
+    

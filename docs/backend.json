@@ -55,10 +55,11 @@
         },
         "role": {
           "type": "string",
-          "description": "The role assigned to the user within their client's portal. 'Admin' users can manage other users for their client, 'StandardUser' for regular access.",
+          "description": "The role assigned to the user. 'Admin' has full control. 'Boku_Access' can manage 'Client_Access' users. 'Client_Access' is for standard users.",
           "enum": [
             "Admin",
-            "StandardUser"
+            "Boku_Access",
+            "Client_Access"
           ]
         },
         "firstName": {
@@ -218,4 +219,5 @@
     "reasoning": "The proposed Firestore structure is designed to facilitate a secure, scalable, and debuggable multi-tenant client portal with specific role-based access control (DBAC).\n\n**1. Authorization Independence via Denormalization:**\n*   **Client Entity (`/clients/{clientId}`):** This is the root of each tenant's data. Its ID (`clientId`) serves as the primary authorization context for all nested subcollections. No data from a parent document is required to authorize access to `Client` documents themselves, making them atomically accessible.\n*   **PortalUser Entity (`/clients/{clientId}/portalUsers/{portalUserId}`):** Each `PortalUser` document explicitly contains its `clientId` and `role` fields. This is critical for authorization independence. When a user (`request.auth.uid`) attempts to access data, rules can directly check `resource.data.clientId` against the `clientId` in the path, and `resource.data.role` for permissions. While a `get()` operation is still needed to retrieve the *requesting user's own* role (e.g., `get(/clients/$(clientId)/portalUsers/$(request.auth.uid)).data.role`), this is a self-referential check within the same tenant context, not a hierarchical dependency on parent document data. This allows for atomic writes/updates of `PortalUser` documents without breaking security.\n*   **QuickBooksIntegration Entity (`/clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId}`):** Similarly, the `QuickBooksIntegration` document explicitly contains its `clientId`. This allows rules to verify ownership directly from the `resource.data.clientId` against the path `clientId`, without needing to fetch the parent `Client` document. Access for `PortalUser`s would still involve a self-referential `get()` to check their role within the `clientId`.\n\n**2. Support for Query-Able Security Rules (QAPs):**\n*   **Structural Segregation:** The entire structure is segregated by `clientId`. All data within `/clients/{clientId}/...` inherently belongs to that specific client. This ensures a homogeneous security posture within each client's partition.\n*   **Path-Based Ownership:** The use of `clients/{clientId}` as the top-level collection for tenant data inherently scopes all queries. A `list` operation on `/clients/{clientId}/portalUsers` will only ever return `PortalUser` documents for the specified `clientId`. Security rules can then easily enforce that the `request.auth.token.clientId` (if using custom claims, or derived from the requesting user's own `PortalUser` document) matches the `clientId` in the path, and that the requesting user has the 'Admin' role within that client. This prevents rules from acting as filters, as the query is already scoped by the path, and the rules simply validate the requester's permissions for that already-scoped data. The explicit `clientId` on nested documents also ensures that `list` operations remain secure and efficient, as rules don't need to perform expensive lookups across parent documents."
   }
 }
+
     

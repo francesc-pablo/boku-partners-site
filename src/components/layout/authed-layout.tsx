@@ -69,12 +69,11 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
         );
     }
 
-    const isAdmin = portalUser.role === 'Admin';
     const userInitial = portalUser.firstName ? portalUser.firstName.charAt(0) : portalUser.email.charAt(0);
 
     const navItems = [
-        { href: '/clients', label: 'Quickbooks', icon: LayoutDashboard, adminOnly: false },
-        { href: '/admin/users', label: 'User Management', icon: Users, adminOnly: true },
+        { href: '/clients', label: 'Quickbooks', icon: LayoutDashboard, roles: ['Admin', 'Boku_Access', 'Client_Access'] },
+        { href: '/admin/users', label: 'User Management', icon: Users, roles: ['Admin', 'Boku_Access'] },
     ];
 
     const activeNavItem = navItems.find(item => pathname.startsWith(item.href));
@@ -88,7 +87,7 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
                 <SidebarContent>
                     <SidebarMenu>
                         {navItems.map((item) => (
-                            (!item.adminOnly || isAdmin) && (
+                            (item.roles.includes(portalUser.role)) && (
                                 <SidebarMenuItem key={item.href}>
                                     <SidebarMenuButton asChild tooltip={item.label} isActive={pathname.startsWith(item.href)}>
                                         <Link href={item.href}>

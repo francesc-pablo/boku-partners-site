@@ -64,6 +64,9 @@ export function LoginForm() {
                 <Button type="submit" disabled={loading} className="w-full">
                   {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...</> : 'Login'}
                 </Button>
+                <Button variant="link" asChild>
+                  <Link href="/signup">Don't have an account? Sign Up</Link>
+                </Button>
             </CardFooter>
         </Card>
     </form>

@@ -89,7 +89,9 @@
         "id",
         "email",
         "clientId",
-        "role"
+        "role",
+        "firstName",
+        "lastName"
       ]
     },
     "QuickBooksIntegration": {

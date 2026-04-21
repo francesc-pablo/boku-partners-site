@@ -10,6 +10,7 @@ export interface PortalUser {
     role: 'Admin' | 'StandardUser';
     firstName: string;
     lastName: string;
+    company?: string;
 }
 
 /**

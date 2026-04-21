@@ -54,6 +54,7 @@ function UserTableSkeleton() {
                 <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Company</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -63,6 +64,7 @@ function UserTableSkeleton() {
                     <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                         <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                     </TableRow>
@@ -97,7 +99,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     setIsAddPending(true);
 
     const formData = new FormData(e.currentTarget);
-    const { firstName, lastName, role, clientId } = Object.fromEntries(formData.entries());
+    const { firstName, lastName, role, clientId, company } = Object.fromEntries(formData.entries());
 
     // 1. Call server action to create the auth user.
     const serverResult = await createUserByAdmin(formData);
@@ -119,6 +121,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
         role: role as 'Admin' | 'StandardUser',
         firstName: firstName as string,
         lastName: lastName as string,
+        company: company as string,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     };
@@ -183,6 +186,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     const updates = {
         firstName: formData.get('firstName') as string,
         lastName: formData.get('lastName') as string,
+        company: formData.get('company') as string,
         role: formData.get('role') as 'Admin' | 'StandardUser',
     };
 
@@ -262,6 +266,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Company</TableHead>
               <TableHead>Role</TableHead>
               <TableHead><span className="sr-only">Actions</span></TableHead>
             </TableRow>
@@ -272,6 +277,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.firstName} {user.lastName}</TableCell>
                   <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.company}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge>
                   </TableCell>
@@ -303,7 +309,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No other users found in this client account.
                 </TableCell>
               </TableRow>
@@ -332,6 +338,10 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="add-lastName" className="text-right">Last Name</Label>
                             <Input id="add-lastName" name="lastName" className="col-span-3" required/>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="add-company" className="text-right">Company</Label>
+                            <Input id="add-company" name="company" className="col-span-3" />
                         </div>
                          <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="add-email" className="text-right">Email</Label>
@@ -381,6 +391,10 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="lastName" className="text-right">Last Name</Label>
                             <Input id="lastName" name="lastName" defaultValue={userToEdit?.lastName} className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="company" className="text-right">Company</Label>
+                            <Input id="company" name="company" defaultValue={userToEdit?.company} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="role" className="text-right">Role</Label>

@@ -69,6 +69,10 @@
           "type": "string",
           "description": "The last name of the portal user."
         },
+        "company": {
+          "type": "string",
+          "description": "The company the portal user works for."
+        },
         "createdAt": {
           "type": "string",
           "description": "Timestamp when the user account was created.",

@@ -33,10 +33,10 @@ export async function getValidAccessToken(clientId: string) {
   console.log('QuickBooks access token expired, refreshing...');
   try {
     const qbClientId = process.env.NEXT_PUBLIC_QB_CLIENT_ID;
-    const qbClientSecret = process.env.NEXT_PUBLIC_QB_CLIENT_SECRET;
+    const qbClientSecret = process.env.QB_CLIENT_SECRET;
     
     if (!qbClientId || !qbClientSecret) {
-        throw new Error('QuickBooks environment variables NEXT_PUBLIC_QB_CLIENT_ID and NEXT_PUBLIC_QB_CLIENT_SECRET are not set on the server.');
+        throw new Error('QuickBooks environment variables NEXT_PUBLIC_QB_CLIENT_ID and QB_CLIENT_SECRET are not set on the server.');
     }
 
     const res = await axios.post(

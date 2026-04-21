@@ -15,10 +15,11 @@ export async function GET(req: Request) {
 
     try {
         const qbClientId = process.env.NEXT_PUBLIC_QB_CLIENT_ID;
-        const qbRedirectUri = process.env.NEXT_PUBLIC_QB_REDIRECT_URI;
+        // Dynamically construct the redirect URI from the request origin
+        const redirectUri = `${origin}/api/auth/callback`;
         
-        if (!qbClientId || !qbRedirectUri) {
-            throw new Error('QuickBooks environment variables are not configured. Please set NEXT_PUBLIC_QB_CLIENT_ID and NEXT_PUBLIC_QB_REDIRECT_URI.');
+        if (!qbClientId) {
+            throw new Error('QuickBooks Client ID is not configured. Please set NEXT_PUBLIC_QB_CLIENT_ID.');
         }
 
         if (!clientId) {
@@ -37,7 +38,7 @@ export async function GET(req: Request) {
         const authUrl =
           `https://appcenter.intuit.com/connect/oauth2` +
           `?client_id=${qbClientId}` +
-          `&redirect_uri=${encodeURIComponent(qbRedirectUri)}` +
+          `&redirect_uri=${encodeURIComponent(redirectUri)}` +
           `&response_type=code` +
           `&scope=com.intuit.quickbooks.accounting` +
           `&state=${state}`;

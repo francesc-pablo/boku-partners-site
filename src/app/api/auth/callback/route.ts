@@ -17,11 +17,11 @@ export async function GET(req: Request) {
 
   try {
     const qbClientId = process.env.NEXT_PUBLIC_QB_CLIENT_ID;
-    const qbClientSecret = process.env.NEXT_PUBLIC_QB_CLIENT_SECRET;
-    const qbRedirectUri = process.env.NEXT_PUBLIC_QB_REDIRECT_URI;
+    const qbClientSecret = process.env.QB_CLIENT_SECRET; // Use server-only secret
+    const redirectUri = `${origin}/api/auth/callback`; // Dynamic redirect URI
 
-    if (!qbClientId || !qbClientSecret || !qbRedirectUri) {
-        throw new Error('QuickBooks environment variables are not configured on the server.');
+    if (!qbClientId || !qbClientSecret) {
+        throw new Error('QuickBooks environment variables (client ID or secret) are not configured on the server.');
     }
 
     if (!returnedState) {
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
       new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: qbRedirectUri,
+        redirect_uri: redirectUri,
       }),
       {
         headers: {

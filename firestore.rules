@@ -73,7 +73,7 @@ service cloud.firestore {
     //----------------------------------------------------------------//
 
     match /user_to_client_map/{userId} {
-      allow get: if isOwner(userId);
+      allow get: if isSignedIn();
       // Admin or Boku_Access users can create the mapping record for a new user in their client.
       allow create: if isClientAdmin(request.resource.data.clientId) || isBokuAccess(request.resource.data.clientId);
       allow delete: if isClientAdmin(resource.data.clientId) || isBokuAccess(resource.data.clientId);
@@ -112,8 +112,8 @@ service cloud.firestore {
     }
 
     match /clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId} {
-      allow get: if true;
-      allow list: if true;
+      allow get: if isClientAdmin(clientId);
+      allow list: if isClientAdmin(clientId);
       allow create: if true;
       allow update, delete: if false;
     }

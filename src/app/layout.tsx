@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ConditionalLayout } from '@/components/layout/conditional-layout';
+import FirebaseClientProviderWrapper from './firebase-client-provider-wrapper';
 
 export const metadata: Metadata = {
   title: 'Boku Partners',
@@ -27,10 +27,10 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased')} suppressHydrationWarning>
-        <FirebaseClientProvider>
+        <FirebaseClientProviderWrapper>
           <ConditionalLayout>{children}</ConditionalLayout>
           <Toaster />
-        </FirebaseClientProvider>
+        </FirebaseClientProviderWrapper>
       </body>
     </html>
   );

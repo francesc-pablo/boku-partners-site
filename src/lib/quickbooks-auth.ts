@@ -1,25 +1,20 @@
 'use server';
 
 import axios from 'axios';
-import { doc, getDocs, collection, query, orderBy, limit, serverTimestamp, updateDoc, getFirestore } from 'firebase/firestore';
-import { initializeApp, getApps } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
+import { getAdminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
-// Ensure Firebase is initialized for server-side use
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
-const firestore = getFirestore();
+const firestore = getAdminDb();
 
 export async function getValidAccessToken(clientId: string) {
   if (!clientId) {
       throw new Error('Client ID is required to get QuickBooks access token.');
   }
 
-  const integrationCollectionRef = collection(firestore, 'clients', clientId, 'quickBooksIntegration');
+  const integrationCollectionRef = firestore.collection('clients').doc(clientId).collection('quickBooksIntegration');
   // Get the most recently created integration document.
-  const q = query(integrationCollectionRef, orderBy('connectedAt', 'desc'), limit(1));
-  const snapshot = await getDocs(q);
+  const q = integrationCollectionRef.orderBy('connectedAt', 'desc').limit(1);
+  const snapshot = await q.get();
 
   if (snapshot.empty) {
       throw new Error('QuickBooks not connected for this client.');
@@ -28,8 +23,8 @@ export async function getValidAccessToken(clientId: string) {
   const tokenDoc = snapshot.docs[0];
   let tokenData = tokenDoc.data();
   
-  // Timestamps might be Firestore Timestamp objects, so we convert them to JS Dates
-  const accessTokenExpiresAt = tokenData.accessTokenExpiresAt.toDate ? tokenData.accessTokenExpiresAt.toDate() : new Date(tokenData.accessTokenExpiresAt);
+  // Timestamps from Admin SDK are objects, so we need to convert them to JS Dates
+  const accessTokenExpiresAt = (tokenData.accessTokenExpiresAt as Timestamp).toDate();
   
   if (Date.now() < accessTokenExpiresAt.getTime()) {
     return { accessToken: tokenData.accessToken, realmId: tokenData.realmId };
@@ -69,10 +64,10 @@ export async function getValidAccessToken(clientId: string) {
         refreshToken: refresh_token,
         accessTokenExpiresAt: new Date(Date.now() + expires_in * 1000),
         refreshTokenExpiresAt: new Date(Date.now() + x_refresh_token_expires_in * 1000),
-        updatedAt: serverTimestamp()
+        updatedAt: Timestamp.now()
     };
 
-    await updateDoc(tokenDoc.ref, newTokenData);
+    await tokenDoc.ref.update(newTokenData);
 
     console.log('QuickBooks token refreshed successfully.');
     return { accessToken: newTokenData.accessToken, realmId: tokenData.realmId };

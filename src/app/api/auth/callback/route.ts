@@ -2,15 +2,10 @@
 
 import { NextResponse } from 'next/server';
 import axios from 'axios';
-import { collection, query, where, getDocs, deleteDoc, doc, setDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
-import { initializeApp, getApps } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
+import { getAdminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
-// Ensure Firebase is initialized
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
-const firestore = getFirestore();
+const firestore = getAdminDb();
 
 export async function GET(req: Request) {
   const { searchParams, origin } = new URL(req.url);
@@ -37,8 +32,8 @@ export async function GET(req: Request) {
       throw new Error('Incomplete data from QuickBooks. Missing code or realmId.');
     }
 
-    const q = query(collection(firestore, 'oauth_states'), where('state', '==', returnedState));
-    const querySnapshot = await getDocs(q);
+    const q = firestore.collection('oauth_states').where('state', '==', returnedState);
+    const querySnapshot = await q.get();
 
     if (querySnapshot.empty) {
       throw new Error('Invalid or expired state parameter. Please try connecting again.');
@@ -46,7 +41,7 @@ export async function GET(req: Request) {
 
     const stateDoc = querySnapshot.docs[0];
     const { clientId } = stateDoc.data();
-    await deleteDoc(stateDoc.ref);
+    await stateDoc.ref.delete();
 
     if (!clientId) {
       throw new Error('Client ID not found in state document. Cannot connect QuickBooks account.');
@@ -73,11 +68,11 @@ export async function GET(req: Request) {
         throw new Error("Token exchange failed. Did not receive access_token or refresh_token.");
     }
     
-    const integrationCollectionRef = collection(firestore, 'clients', clientId, 'quickBooksIntegration');
-    const newIntegrationDocRef = doc(integrationCollectionRef);
+    const integrationCollectionRef = firestore.collection('clients').doc(clientId).collection('quickBooksIntegration');
+    const newIntegrationDocRef = integrationCollectionRef.doc();
     
     // Create a new integration document.
-    await setDoc(newIntegrationDocRef, {
+    await newIntegrationDocRef.set({
       id: newIntegrationDocRef.id,
       clientId: clientId,
       accessToken: access_token,
@@ -86,8 +81,8 @@ export async function GET(req: Request) {
       accessTokenExpiresAt: new Date(Date.now() + expires_in * 1000),
       refreshTokenExpiresAt: new Date(Date.now() + x_refresh_token_expires_in * 1000),
       scope: scope || 'com.intuit.quickbooks.accounting',
-      connectedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      connectedAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
     });
     
     const successUrl = new URL('/clients', origin);

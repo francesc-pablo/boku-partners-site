@@ -1,47 +1,49 @@
 'use client';
 
-import { useFormStatus } from 'react-dom';
-import { useActionState, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/firebase/client-provider';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { resetPassword } from '@/app/(auth)/actions';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-const initialState = {
-  message: '',
-  success: false,
-};
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : 'Send Reset Link'}
-    </Button>
-  );
-}
 
 export function ForgotPasswordForm() {
-  const [state, formAction] = useActionState(resetPassword, initialState);
   const { toast } = useToast();
+  const auth = useAuth();
+  
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (state?.message && !state.success) {
-      toast({
-        title: 'Error',
-        description: state.message,
-        variant: 'destructive',
-      });
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+        toast({ title: 'Error', description: 'Please enter your email address.', variant: 'destructive'});
+        return;
     }
-  }, [state, toast]);
+    setLoading(true);
 
-  if (state.success) {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        setSuccess(true);
+    } catch (error: any) {
+        toast({
+            title: 'Error',
+            description: error.message.replace('Firebase: ',''),
+            variant: 'destructive',
+        });
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  if (success) {
     return (
         <Alert>
             <AlertTitle>Check Your Email</AlertTitle>
@@ -58,7 +60,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form action={formAction}>
+    <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
           <CardTitle>Forgot Password</CardTitle>
@@ -67,11 +69,13 @@ export function ForgotPasswordForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email Address</Label>
-            <Input id="email" name="email" type="email" placeholder="john.doe@example.com" required />
+            <Input id="email" name="email" type="email" placeholder="john.doe@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
         </CardContent>
         <CardFooter className="flex-col gap-4">
-          <SubmitButton />
+            <Button type="submit" disabled={loading} className="w-full">
+                {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : 'Send Reset Link'}
+            </Button>
           <Button variant="link" asChild>
             <Link href="/login">Back to Login</Link>
           </Button>

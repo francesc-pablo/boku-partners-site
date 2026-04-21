@@ -1,26 +1,4 @@
 'use server';
 
-import { redirect } from 'next/navigation';
-import { getApps, initializeApp } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
-import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
-
-// This file is now only for server-side actions that don't directly manipulate auth state,
-// like password reset.
-
-// Initialize on the server for these actions
-if (!getApps().length) {
-    initializeApp(firebaseConfig);
-}
-const auth = getAuth();
-
-
-export async function resetPassword(prevState: { message: string, success: boolean }, formData: FormData) {
-  const email = formData.get('email') as string;
-  try {
-    await sendPasswordResetEmail(auth, email);
-    return { message: 'Password reset email sent. Please check your inbox.', success: true };
-  } catch (e: any) {
-     return { message: e.message, success: false };
-  }
-}
+// This file is reserved for server-side authentication-related actions.
+// Password reset has been moved to the client-side component to use the client auth SDK.

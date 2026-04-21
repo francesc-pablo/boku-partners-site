@@ -2,16 +2,10 @@
 
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { collection, addDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
-import { initializeApp, getApps } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
+import { getAdminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
-// Ensure Firebase is initialized
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
-
-const firestore = getFirestore();
+const firestore = getAdminDb();
 
 
 export async function GET(req: Request) {
@@ -34,10 +28,10 @@ export async function GET(req: Request) {
         const state = crypto.randomUUID();
 
         // Store the state and clientId in Firestore to verify it in the callback
-        await addDoc(collection(firestore, 'oauth_states'), {
+        await firestore.collection('oauth_states').add({
           state,
           clientId,
-          createdAt: serverTimestamp(),
+          createdAt: Timestamp.now(),
         });
 
         const authUrl =

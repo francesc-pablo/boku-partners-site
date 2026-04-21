@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { MobileNav } from './mobile-nav';
 import { useState, useEffect, useRef } from 'react';
-import { useUser, useAuth } from '@/firebase/client-provider';
+import { useUser, useFirebase } from '@/firebase/client-provider';
 import { Button } from '../ui/button';
 
 const navLinks = [
@@ -20,7 +20,7 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
-  const auth = useAuth();
+  const { auth } = useFirebase();
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
   const headerHeight = 80; // h-20 is 5rem which is 80px
@@ -44,7 +44,9 @@ export function Header() {
   }, []);
 
   const handleLogout = async () => {
-    await auth.signOut();
+    if (auth) {
+      await auth.signOut();
+    }
   };
   
   return (

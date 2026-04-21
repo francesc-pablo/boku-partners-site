@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/accordion';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { services } from '@/lib/services';
-import { useUser, useAuth } from '@/firebase/client-provider';
+import { useUser, useFirebase } from '@/firebase/client-provider';
 
 
 type NavLink = {
@@ -31,10 +31,12 @@ export function MobileNav({ navLinks }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
-  const auth = useAuth();
+  const { auth } = useFirebase();
 
   const handleLogout = async () => {
-    await auth.signOut();
+    if (auth) {
+      await auth.signOut();
+    }
     setOpen(false);
   };
 

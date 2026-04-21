@@ -15,7 +15,6 @@ import type { Auth, User } from 'firebase/auth';
 import type {
   Firestore,
   Query,
-  onSnapshot,
   DocumentData,
   FirestoreError,
   QuerySnapshot,
@@ -27,6 +26,12 @@ import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+// Define types for the dynamically loaded functions
+type DocFn = typeof import('firebase/firestore').doc;
+type CollectionFn = typeof import('firebase/firestore').collection;
+type OnSnapshotFn = typeof import('firebase/firestore').onSnapshot;
+
+
 // Combined state for the Firebase context
 export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
@@ -35,6 +40,11 @@ export interface FirebaseContextState {
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
+  fns: {
+      doc: DocFn | null;
+      collection: CollectionFn | null;
+      onSnapshot: OnSnapshotFn | null;
+  }
 }
 
 // React Context
@@ -46,6 +56,9 @@ interface FirebaseServices {
     firebaseApp: FirebaseApp;
     auth: Auth;
     firestore: Firestore;
+    doc: DocFn;
+    collection: CollectionFn;
+    onSnapshot: OnSnapshotFn;
 }
 
 export function FirebaseClientProvider({
@@ -65,14 +78,14 @@ export function FirebaseClientProvider({
             // Dynamically import Firebase modules only when this component mounts in the browser
             const { initializeApp, getApps, getApp } = await import('firebase/app');
             const { getAuth, onAuthStateChanged } = await import('firebase/auth');
-            const { getFirestore } = await import('firebase/firestore');
+            const { getFirestore, doc, collection, onSnapshot } = await import('firebase/firestore');
             const { firebaseConfig } = await import('@/firebase/config');
 
             const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
             const auth = getAuth(app);
             const firestore = getFirestore(app);
 
-            setServices({ firebaseApp: app, auth, firestore });
+            setServices({ firebaseApp: app, auth, firestore, doc, collection, onSnapshot });
 
             const unsubscribe = onAuthStateChanged(
                 auth,
@@ -110,6 +123,11 @@ export function FirebaseClientProvider({
       user,
       isUserLoading: isUserLoading || !services, // Also loading while services are not initialized
       userError,
+      fns: {
+          doc: services?.doc || null,
+          collection: services?.collection || null,
+          onSnapshot: services?.onSnapshot || null
+      }
     };
   }, [services, user, isUserLoading, userError]);
 
@@ -165,6 +183,13 @@ export const useUser = (): UserHookResult => {
     return { user, isUserLoading, userError };
 };
 
+// New hook to get firestore functions
+export const useFirestoreFns = () => {
+    const { fns } = useFirebaseInternal();
+    return fns;
+};
+
+
 type MemoFirebase<T> = T & { __memo?: boolean };
 export function useMemoFirebase<T>(
   factory: () => T,
@@ -204,15 +229,16 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  const { onSnapshot } = useFirestoreFns(); // Get the function from our new hook
 
   useEffect(() => {
-    if (!memoizedTargetRefOrQuery) {
+    if (!memoizedTargetRefOrQuery || !onSnapshot) { // Check if onSnapshot is loaded
       setData(null);
-      setIsLoading(false);
+      setIsLoading(!onSnapshot); // If onSnapshot isn't loaded, we are loading
       setError(null);
-      return;
+      return () => {};
     }
 
     setIsLoading(true);
@@ -248,9 +274,10 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery]);
+  }, [memoizedTargetRefOrQuery, onSnapshot]); // Add onSnapshot to dependency array
+
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
+    throw new Error(String(memoizedTargetRefOrQuery) + ' was not properly memoized using useMemoFirebase');
   }
   return { data, isLoading, error };
 }
@@ -269,15 +296,16 @@ export function useDoc<T = any>(
   type StateDataType = WithId<T> | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  const { onSnapshot } = useFirestoreFns(); // Get the function from our new hook
 
   useEffect(() => {
-    if (!memoizedDocRef) {
+    if (!memoizedDocRef || !onSnapshot) { // Check if onSnapshot is loaded
       setData(null);
-      setIsLoading(false);
+      setIsLoading(!onSnapshot); // If onSnapshot isn't loaded, we are loading
       setError(null);
-      return;
+      return () => {};
     }
 
     setIsLoading(true);
@@ -308,7 +336,7 @@ export function useDoc<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedDocRef]);
+  }, [memoizedDocRef, onSnapshot]); // Add onSnapshot to dependency array
 
   if(memoizedDocRef && !memoizedDocRef.__memo) {
     throw new Error(memoizedDocRef.path + ' was not properly memoized using useMemoFirebase');

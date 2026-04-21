@@ -1,7 +1,6 @@
 'use client';
 
-import { useFirestore, useMemoFirebase, useDoc } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useFirestore, useMemoFirebase, useDoc, useFirestoreFns } from '@/firebase';
 
 export interface PortalUser {
     id: string;
@@ -23,14 +22,15 @@ export interface PortalUser {
  */
 export function usePortalUser(uid: string | undefined) {
     const firestore = useFirestore();
+    const { doc } = useFirestoreFns();
 
     // Step 1: Create a memoized reference to find the user's clientId from the map.
     const userClientMapRef = useMemoFirebase(() => {
-        if (!firestore || !uid) return null;
+        if (!firestore || !uid || !doc) return null;
         // This assumes a collection `user_to_client_map` exists at the root.
         // The document ID is the user's UID.
         return doc(firestore, 'user_to_client_map', uid);
-    }, [firestore, uid]);
+    }, [firestore, uid, doc]);
 
     const { data: clientMap, isLoading: isMapLoading, error: mapError } = useDoc<{ clientId: string }>(userClientMapRef);
 
@@ -38,15 +38,17 @@ export function usePortalUser(uid: string | undefined) {
 
     // Step 2: Create a memoized reference to the actual PortalUser document using the clientId.
     const portalUserRef = useMemoFirebase(() => {
-        if (!firestore || !clientId || !uid) return null;
+        if (!firestore || !clientId || !uid || !doc) return null;
         return doc(firestore, 'clients', clientId, 'portalUsers', uid);
-    }, [firestore, clientId, uid]);
+    }, [firestore, clientId, uid, doc]);
     
     const { data: portalUser, isLoading: isUserLoading, error: userError } = useDoc<PortalUser>(portalUserRef);
 
+    const fnsLoading = !doc;
+
     return {
         portalUser,
-        isLoading: isMapLoading || isUserLoading,
+        isLoading: isMapLoading || isUserLoading || fnsLoading,
         error: mapError || userError,
     };
 }

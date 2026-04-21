@@ -7,6 +7,7 @@ export {
   useAuth,
   useFirestore,
   useUser,
+  useFirestoreFns,
   useMemoFirebase,
   useCollection,
   useDoc,

@@ -7,7 +7,7 @@ export interface PortalUser {
     id: string;
     clientId: string;
     email: string;
-    role: 'Admin' | 'StandardUser';
+    role: 'Admin' | 'Boku_Access' | 'StandardUser';
     firstName: string;
     lastName: string;
     company?: string;
@@ -50,3 +50,5 @@ export function usePortalUser(uid: string | undefined) {
         error: mapError || userError,
     };
 }
+
+    

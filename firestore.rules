@@ -5,8 +5,8 @@
  * The security model is built on strict data partitioning by a top-level client ID (`clientId`).
  * All data for a specific client is nested under `/clients/{clientId}`, ensuring that users
  * from one client can never access data from another. Within each client's data partition,
- * a Role-Based Access Control (RBAC) system is used, primarily distinguishing between
- * 'Admin' and standard users.
+ * a Role-Based Access Control (RBAC) system is used, distinguishing between 'Admin', 'Boku_Access',
+ * and 'StandardUser' roles.
  *
  * Data Structure:
  * - /clients/{clientId}: The root document for a single client tenant.
@@ -16,16 +16,11 @@
  * Key Security Decisions:
  * - Strict Tenant Isolation: All rules verify that the requesting user belongs to the `clientId`
  *   specified in the document path, preventing any cross-tenant data access.
- * - Admin-Based Management: Users with the 'Admin' role within a client can manage other users
- *   and sensitive integration settings for that client only.
- * - User Self-Service: Users can view and update their own profile information but cannot
- *   view other users' profiles unless they are an admin.
+ * - Role-Based Management: 'Admin' users can manage any user. 'Boku_Access' users can manage
+ *   'StandardUser' accounts, providing a middle tier of administrative capability.
+ * - User Self-Service: Users can view and update their own profile information.
  * - Deny by Default: Listing all clients is disallowed, and creation/deletion of top-level
  *   client documents is restricted, assuming these are backend-controlled operations.
- * - Denormalization for Authorization: User roles and client IDs are stored directly on
- *   `portalUser` documents. This allows security rules to determine a user's permissions
- *   for a given client with a single `get` operation on their own user document, which is
- *   efficient and secure.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -35,55 +30,42 @@ service cloud.firestore {
     //                        Helper Functions                        //
     //----------------------------------------------------------------//
 
-    /**
-     * Returns true if the user is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Returns true if the requesting user's UID matches the provided userId.
-     * Used for checking document ownership.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
-    /**
-     * Returns true if the requesting user is an 'Admin' for the specified client.
-     * It safely gets the user's own document and checks for the 'Admin' role.
-     * The 'get' operation is permitted by the 'get' rule on portalUsers, which allows a user to read their own document.
-     */
-    function isClientAdmin(clientId) {
+
+    function getRequestingUserRole(clientId) {
       let userDocPath = /databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid);
+      // The `get` is allowed by the `get` rule, which lets a user read their own document.
       let userDoc = get(userDocPath);
-      // Check that the document exists, has a 'role' field, and the role is 'Admin'.
-      return userDoc.data != null && 'role' in userDoc.data && userDoc.data.role == 'Admin';
+      if (exists(userDocPath)) {
+        return userDoc.data.role;
+      }
+      return null;
+    }
+    
+    function isClientAdmin(clientId) {
+      return getRequestingUserRole(clientId) == 'Admin';
     }
 
-    /**
-     * Returns true if the requesting user is a member of the specified client organization.
-     */
+    function isBokuAccess(clientId) {
+      return getRequestingUserRole(clientId) == 'Boku_Access';
+    }
+
     function isClientMember(clientId) {
       return isSignedIn() 
         && exists(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid));
     }
     
-    /**
-     * Validates that the `clientId` and `id` fields in a new portalUser document
-     * match the document's path, ensuring relational integrity.
-     */
     function isPortalUserDataValidOnCreate(clientId, portalUserId) {
       let incomingData = request.resource.data;
-      return incomingData.clientId == clientId && incomingData.id == portalUserId
-          && isClientAdmin(clientId); // Only an admin can create a user doc
+      return incomingData.clientId == clientId && incomingData.id == portalUserId;
     }
 
-    /**
-     * Ensures critical relational IDs on a portalUser document cannot be changed after creation.
-     * Allow role changes only by an Admin.
-     */
     function arePortalUserFieldsValidOnUpdate(clientId) {
       let incomingData = request.resource.data;
       let existingData = resource.data;
@@ -99,65 +81,44 @@ service cloud.firestore {
     //                         Collection Rules                       //
     //----------------------------------------------------------------//
 
-    /**
-     * @description Public mapping from a user's UID to their client ID.
-     * Any authenticated user needs to be able to read their own mapping to find their client.
-     * An admin can create this mapping when adding a new user.
-     */
     match /user_to_client_map/{userId} {
       allow get: if isOwner(userId);
       allow create: if isClientAdmin(request.resource.data.clientId);
-      // To delete a mapping, the requester must be an admin of the client this mapping points to.
-      // This requires reading the document before deleting it.
       allow delete: if isClientAdmin(resource.data.clientId);
       allow list, update: if false;
     }
 
-    /**
-     * @description Rules for the top-level client tenant documents.
-     * Only members of that client can read the client document.
-     */
     match /clients/{clientId} {
       allow get: if isClientMember(clientId);
-      allow list: if false; // Deny listing all clients for security
-      allow create: if false; // Client creation is part of the old signup flow, disabled for now.
+      allow list: if false;
+      allow create: if false;
       allow update: if isClientAdmin(clientId);
       allow delete: if false;
     }
 
-    /**
-     * @description Rules for portal user accounts, which are nested under a specific client.
-     */
     match /clients/{clientId}/portalUsers/{portalUserId} {
-      allow get: if isOwner(portalUserId) || isClientAdmin(clientId);
-      allow list: if isClientAdmin(clientId);
+      // Read: Owner can read self. Admin and Boku_Access can read anyone in the client.
+      allow get: if isOwner(portalUserId) || isClientAdmin(clientId) || isBokuAccess(clientId);
+      // List: Admin and Boku_Access can list all users in the client.
+      allow list: if isClientAdmin(clientId) || isBokuAccess(clientId);
 
-      // User is created by an Admin
-      allow create: if isClientAdmin(clientId) && isPortalUserDataValidOnCreate(clientId, portalUserId);
+      // Create: Admin can create any role. Boku_Access can only create StandardUser. Data must be valid.
+      allow create: if (isClientAdmin(clientId) || (isBokuAccess(clientId) && request.resource.data.role == 'StandardUser'))
+                    && isPortalUserDataValidOnCreate(clientId, portalUserId);
 
-      // User can update their own profile, Admin can update any profile in their client.
-      allow update: if (isOwner(portalUserId) || isClientAdmin(clientId)) && arePortalUserFieldsValidOnUpdate(clientId);
+      // Update: Owner can update self. Admin can update anyone. Boku_Access can update StandardUser. Data and roles must be valid.
+      allow update: if (isOwner(portalUserId) || isClientAdmin(clientId) || (isBokuAccess(clientId) && resource.data.role == 'StandardUser')) 
+                    && arePortalUserFieldsValidOnUpdate(clientId);
       
-      allow delete: if isClientAdmin(clientId);
+      // Delete: Admin can delete anyone (but not themselves). Boku_Access can delete StandardUser.
+      allow delete: if (isClientAdmin(clientId) && !isOwner(portalUserId)) || 
+                     (isBokuAccess(clientId) && resource.data.role == 'StandardUser');
     }
     
-    /**
-     * @description Rules for the temporary state documents used in the OAuth 2.0 flow.
-     * The server-side /api/auth/connect route needs to create these documents,
-     * and the /api/auth/callback route needs to read and delete them.
-     */
     match /oauth_states/{stateId} {
       allow read, write: if true;
     }
 
-    /**
-     * @description Rules for the highly sensitive QuickBooks integration data.
-     * The `list` and `create` operations are opened up to allow unauthenticated server-side
-     * processes (like Next.js Server Actions) to retrieve/create tokens for making API calls.
-     * In a production environment with a more robust backend (e.g., using the Admin SDK),
-     * these rules should be locked down significantly. Client-side updates and deletes
-     * are disabled to prevent tampering with tokens.
-     */
     match /clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId} {
       allow get: if true;
       allow list: if true;
@@ -166,3 +127,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

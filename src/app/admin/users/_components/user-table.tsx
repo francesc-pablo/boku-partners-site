@@ -93,32 +93,43 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
 
   const { data: users, isLoading } = useCollection<PortalUser>(usersQuery);
   
+  const canPerformAction = (targetUser: PortalUser) => {
+    if (adminUser.id === targetUser.id) return false;
+    if (adminUser.role === 'Admin') return true;
+    if (adminUser.role === 'Boku_Access' && targetUser.role === 'StandardUser') return true;
+    return false;
+  };
 
   const handleAddUserSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsAddPending(true);
 
     const formData = new FormData(e.currentTarget);
-    const { firstName, lastName, role, clientId, company } = Object.fromEntries(formData.entries());
+    const { firstName, lastName, role, clientId, company, email: formEmail } = Object.fromEntries(formData.entries());
 
-    // 1. Call server action to create the auth user.
+    if (adminUser.role === 'Boku_Access' && role !== 'StandardUser') {
+        toast({ title: 'Permission Denied', description: 'You can only create Standard Users.', variant: 'destructive' });
+        setIsAddPending(false);
+        return;
+    }
+
     const serverResult = await createUserByAdmin(formData);
 
-    if (!serverResult.success || !serverResult.newUserUid || !serverResult.email) {
+    if (!serverResult.success || !serverResult.newUserUid) {
       toast({ title: 'Error', description: serverResult.message, variant: 'destructive' });
       setIsAddPending(false);
       return;
     }
 
-    const { newUserUid, email } = serverResult;
+    const { newUserUid } = serverResult;
+    const email = formEmail as string;
 
-    // 2. Perform client-side writes and email sending.
     const portalUserRef = doc(firestore, 'clients', clientId as string, 'portalUsers', newUserUid);
     const portalUserData = {
         id: newUserUid,
         clientId: clientId as string,
         email: email,
-        role: role as 'Admin' | 'StandardUser',
+        role: role as 'Admin' | 'Boku_Access' | 'StandardUser',
         firstName: firstName as string,
         lastName: lastName as string,
         company: company as string,
@@ -126,7 +137,6 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
         updatedAt: serverTimestamp()
     };
     
-    // Using a promise chain to handle sequential operations and error handling
     setDoc(portalUserRef, portalUserData)
       .catch(err => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -134,7 +144,6 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
               operation: 'create',
               requestResourceData: portalUserData
           }));
-          // Re-throw to break the promise chain
           throw new Error('Failed to create user profile in Firestore.'); 
       })
       .then(() => {
@@ -157,10 +166,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
           setShowAddUserDialog(false);
       })
       .catch(err => {
-          // This catches errors from the chain.
-          // Permission errors are already emitted. The listener will throw them.
-          // We only toast other, unexpected errors.
-          if (!err.message.startsWith('Failed to create')) {
+          if (!(err instanceof FirestorePermissionError)) {
             toast({ title: 'An Error Occurred', description: err.message, variant: 'destructive' });
           }
       })
@@ -172,14 +178,7 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
   const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!userToEdit) return;
-
-    // Prevent admin from removing their own admin role if they are the last one.
-    // This is a simple client-side check. A more robust solution would be a server-side check.
-    if (userToEdit.id === adminUser.id && new FormData(e.currentTarget).get('role') !== 'Admin') {
-      toast({ title: 'Error', description: "You cannot remove your own Admin role.", variant: 'destructive' });
-      return;
-    }
-
+    
     setIsUpdatePending(true);
 
     const formData = new FormData(e.currentTarget);
@@ -187,31 +186,35 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
         firstName: formData.get('firstName') as string,
         lastName: formData.get('lastName') as string,
         company: formData.get('company') as string,
-        role: formData.get('role') as 'Admin' | 'StandardUser',
+        role: formData.get('role') as 'Admin' | 'Boku_Access' | 'StandardUser',
     };
-
-    if (!updates.firstName || !updates.lastName) {
-        toast({ title: 'Error', description: 'First and last name are required.', variant: 'destructive' });
+    
+    if (adminUser.role !== 'Admin' && updates.role !== userToEdit.role) {
+        toast({ title: 'Permission Denied', description: 'You do not have permission to change user roles.', variant: 'destructive' });
         setIsUpdatePending(false);
         return;
     }
 
+    if (userToEdit.id === adminUser.id && updates.role !== 'Admin') {
+      toast({ title: 'Error', description: "You cannot remove your own Admin role.", variant: 'destructive' });
+      setIsUpdatePending(false);
+      return;
+    }
+    
     const userRef = doc(firestore, 'clients', adminUser.clientId, 'portalUsers', userToEdit.id);
 
-    updateDoc(userRef, updates)
+    updateDoc(userRef, { ...updates, updatedAt: serverTimestamp() })
         .then(() => {
             toast({ title: 'Success', description: 'User updated successfully.' });
             setUserToEdit(null);
         })
         .catch(error => {
-            // Create and emit the contextual error for the listener to catch
             const contextualError = new FirestorePermissionError({
                 path: userRef.path,
                 operation: 'update',
                 requestResourceData: updates,
             });
             errorEmitter.emit('permission-error', contextualError);
-            // The global error listener will throw the error, so we don't need to toast it here.
         })
         .finally(() => {
             setIsUpdatePending(false);
@@ -222,8 +225,8 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
   const handleDeleteConfirm = async () => {
     if (!userToDelete || !firestore || !adminUser.clientId) return;
 
-    if (userToDelete.id === adminUser.id) {
-        toast({ title: 'Error', description: 'You cannot delete your own account.', variant: 'destructive' });
+    if (!canPerformAction(userToDelete)) {
+        toast({ title: 'Permission Denied', description: 'You cannot delete this user.', variant: 'destructive' });
         return;
     }
     
@@ -279,10 +282,10 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.company}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge>
+                    <Badge variant={user.role === 'Admin' ? 'default' : user.role === 'Boku_Access' ? 'outline' : 'secondary'}>{user.role.replace('_', ' ')}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                     {user.id !== adminUser.id && (
+                     {canPerformAction(user) && (
                         <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -354,7 +357,8 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Admin">Admin</SelectItem>
+                                    {adminUser.role === 'Admin' && <SelectItem value="Admin">Admin</SelectItem>}
+                                    {adminUser.role === 'Admin' && <SelectItem value="Boku_Access">Boku Access</SelectItem>}
                                     <SelectItem value="StandardUser">Standard User</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -398,12 +402,13 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="role" className="text-right">Role</Label>
-                             <Select name="role" defaultValue={userToEdit?.role}>
+                             <Select name="role" defaultValue={userToEdit?.role} disabled={adminUser.role !== 'Admin'}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Admin">Admin</SelectItem>
+                                    <SelectItem value="Boku_Access">Boku Access</SelectItem>
                                     <SelectItem value="StandardUser">Standard User</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -444,3 +449,5 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
     </>
   );
 }
+
+    

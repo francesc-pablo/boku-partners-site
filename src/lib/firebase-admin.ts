@@ -4,6 +4,13 @@ import { App } from 'firebase-admin/app';
 let app: App;
 
 function initializeAdminSDK() {
+  // New debug logging to help diagnose production environment issues.
+  console.log('--- Firebase Admin SDK Initialization Check ---');
+  console.log(`FIREBASE_ADMIN_PROJECT_ID is set: ${!!process.env.FIREBASE_ADMIN_PROJECT_ID}`);
+  console.log(`FIREBASE_ADMIN_CLIENT_EMAIL is set: ${!!process.env.FIREBASE_ADMIN_CLIENT_EMAIL}`);
+  console.log(`FIREBASE_ADMIN_PRIVATE_KEY is set: ${!!process.env.FIREBASE_ADMIN_PRIVATE_KEY ? 'Yes' : 'No (This is a secret, so we only check for its presence)'}`);
+  console.log('--- End of Debugging Check ---');
+  
   try {
     if (admin.apps.length > 0) {
       return admin.app();

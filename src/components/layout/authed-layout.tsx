@@ -1,7 +1,7 @@
 'use client';
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { useUser, useAuth } from '@/firebase/client-provider';
+import { useUser, useFirebase } from '@/firebase/client-provider';
 import { usePortalUser } from '@/hooks/use-portal-user';
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -33,7 +33,7 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { user, isUserLoading } = useUser();
     const { portalUser, isLoading: isPortalUserLoading } = usePortalUser(user?.uid);
-    const auth = useAuth();
+    const { auth } = useFirebase();
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -42,7 +42,9 @@ export function AuthedLayout({ children }: { children: React.ReactNode }) {
     }, [user, isUserLoading, router]);
 
     const handleLogout = async () => {
-        await auth.signOut();
+        if (auth) {
+            await auth.signOut();
+        }
         router.push('/login');
     };
 

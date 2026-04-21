@@ -1,6 +1,6 @@
 'use client';
 
-import { useFirestore, useMemoFirebase, useDoc, useFirestoreFns } from '@/firebase';
+import { useFirebase, useMemoFirebase, useDoc, useFirestoreFns } from '@/firebase';
 
 export interface PortalUser {
     id: string;
@@ -21,7 +21,7 @@ export interface PortalUser {
  * @returns An object with the portalUser data, loading state, and error.
  */
 export function usePortalUser(uid: string | undefined) {
-    const firestore = useFirestore();
+    const { firestore } = useFirebase();
     const { doc } = useFirestoreFns();
 
     // Step 1: Create a memoized reference to find the user's clientId from the map.

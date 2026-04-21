@@ -3,6 +3,7 @@
 // Re-export the core provider and hooks from the client-provider.
 export {
   FirebaseClientProvider,
+  useFirebase,
   useFirebaseApp,
   useAuth,
   useFirestore,

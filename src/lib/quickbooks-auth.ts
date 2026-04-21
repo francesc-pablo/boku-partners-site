@@ -1,27 +1,18 @@
 'use server';
 
 import axios from 'axios';
-<<<<<<< HEAD
 import { getAdminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
 const firestore = getAdminDb();
-=======
-import { adminDb } from '@/lib/firebase-admin';
-import admin from 'firebase-admin';
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
 
 export async function getValidAccessToken(clientId: string) {
   if (!clientId) {
       throw new Error('Client ID is required to get QuickBooks access token.');
   }
 
-<<<<<<< HEAD
   const integrationCollectionRef = firestore.collection('clients').doc(clientId).collection('quickBooksIntegration');
   // Get the most recently created integration document.
-=======
-  const integrationCollectionRef = adminDb.collection(`clients/${clientId}/quickBooksIntegration`);
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
   const q = integrationCollectionRef.orderBy('connectedAt', 'desc').limit(1);
   const snapshot = await q.get();
 
@@ -73,11 +64,7 @@ export async function getValidAccessToken(clientId: string) {
         refreshToken: refresh_token,
         accessTokenExpiresAt: new Date(Date.now() + expires_in * 1000),
         refreshTokenExpiresAt: new Date(Date.now() + x_refresh_token_expires_in * 1000),
-<<<<<<< HEAD
         updatedAt: Timestamp.now()
-=======
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
     };
 
     await tokenDoc.ref.update(newTokenData);

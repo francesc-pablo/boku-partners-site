@@ -1,10 +1,6 @@
 'use server';
 
-<<<<<<< HEAD
 import { getAdminAuth } from '@/lib/firebase-admin';
-=======
-import { adminAuth } from '@/lib/firebase-admin';
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
 
 export async function createUserByAdmin(formData: FormData) {
     const email = formData.get('email') as string;

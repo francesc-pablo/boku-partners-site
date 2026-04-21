@@ -2,15 +2,7 @@
  * This ruleset implements a secure, multi-tenant model for a client portal with tiered role-based access.
  *
  * Core Philosophy:
-<<<<<<< HEAD
- * The security model is built on strict data partitioning by a top-level client ID (`clientId`).
- * All data for a specific client is nested under `/clients/{clientId}`, ensuring that users
- * from one client can never access data from another. Within each client's data partition,
- * a Role-Based Access Control (RBAC) system is used, distinguishing between 'Admin', 'Boku_Access',
- * and 'Client_Access' roles.
-=======
  * Data is strictly partitioned by `clientId`. The RBAC system operates within each client partition.
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
  *
  * Roles:
  * - Admin: Full control over all users and settings within their client.
@@ -18,21 +10,11 @@
  * - Client_Access: Standard user, can only view and edit their own profile.
  *
  * Key Security Decisions:
-<<<<<<< HEAD
- * - Strict Tenant Isolation: All rules verify that the requesting user belongs to the `clientId`
- *   specified in the document path, preventing any cross-tenant data access.
- * - Role-Based Management: 'Admin' users can manage any user. 'Boku_Access' users can manage
- *   'Client_Access' accounts, providing a middle tier of administrative capability.
- * - User Self-Service: Users can view and update their own profile information.
- * - Deny by Default: Listing all clients is disallowed, and creation/deletion of top-level
- *   client documents is restricted, assuming these are backend-controlled operations.
-=======
  * - Strict Tenant Isolation: All rules verify that a user belongs to the `clientId` in the path.
  * - Hierarchical Permissions: Access is layered. Admins have the highest permissions, Boku_Access has a subset, and Client_Access has the most limited.
  * - Self-Service with Restrictions: Users can edit their own profiles but are blocked from changing their own role or client affiliation.
  * - Admin Safeguards: Admins cannot delete their own accounts to prevent accidental lockouts.
  * - Deny by Default: Listing all clients is disallowed.
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
  */
 rules_version = '2';
 service cloud.firestore {
@@ -49,23 +31,6 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-<<<<<<< HEAD
-
-    function getRequestingUserRole(clientId) {
-      return exists(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid))
-        ? get(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid)).data.role
-        : null;
-    }
-    
-    function isClientAdmin(clientId) {
-      return getRequestingUserRole(clientId) == 'Admin';
-    }
-
-    function isBokuAccess(clientId) {
-      return getRequestingUserRole(clientId) == 'Boku_Access';
-    }
-
-=======
 
     /**
      * Retrieves the role of the currently authenticated user for a specific client.
@@ -85,21 +50,10 @@ service cloud.firestore {
       return getRequestingUserRole(clientId) == 'Boku_Access';
     }
 
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
     function isClientMember(clientId) {
       return isSignedIn() && exists(/databases/$(database)/documents/clients/$(clientId)/portalUsers/$(request.auth.uid));
     }
     
-<<<<<<< HEAD
-    function isPortalUserDataValidOnCreate(clientId, portalUserId) {
-      return request.resource.data.clientId == clientId && request.resource.data.id == portalUserId;
-    }
-
-    function arePortalUserFieldsValidOnUpdate(clientId) {
-      return request.resource.data.clientId == resource.data.clientId
-          && request.resource.data.id == resource.data.id
-          && (request.resource.data.role == resource.data.role || isClientAdmin(clientId)); // Only admins can change roles
-=======
     /**
      * Validates data for a new portal user.
      * - An Admin can create a user with any role.
@@ -143,7 +97,6 @@ service cloud.firestore {
           incomingData.role == 'Client_Access'; // Cannot change their role
 
       return isSelfEdit || isAdminEdit || isBokuAccessEdit;
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
     }
 
 
@@ -153,15 +106,9 @@ service cloud.firestore {
 
     match /user_to_client_map/{userId} {
       allow get: if isOwner(userId);
-<<<<<<< HEAD
-      // Admin or Boku_Access users can create the mapping record for a new user in their client.
-      allow create: if isClientAdmin(request.resource.data.clientId) || isBokuAccess(request.resource.data.clientId);
-      allow delete: if isClientAdmin(resource.data.clientId) || isBokuAccess(resource.data.clientId);
-=======
       // An admin or boku_access must create the mapping when adding a new user.
       allow create: if isAdmin(request.resource.data.clientId) || isBokuAccess(request.resource.data.clientId);
       allow delete: if isAdmin(resource.data.clientId) || isBokuAccess(resource.data.clientId);
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
       allow list, update: if false;
     }
 
@@ -169,33 +116,11 @@ service cloud.firestore {
       allow get: if isClientMember(clientId);
       allow list: if false;
       allow create: if false;
-<<<<<<< HEAD
-      allow update: if isClientAdmin(clientId);
-=======
       allow update: if isAdmin(clientId) || isBokuAccess(clientId);
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
       allow delete: if false;
     }
 
     match /clients/{clientId}/portalUsers/{portalUserId} {
-<<<<<<< HEAD
-      // Read: Owner can read self. Admin and Boku_Access can read anyone in the client.
-      allow get: if isOwner(portalUserId) || isClientAdmin(clientId) || isBokuAccess(clientId);
-      // List: Admin and Boku_Access can list all users in the client.
-      allow list: if isClientAdmin(clientId) || isBokuAccess(clientId);
-
-      // Create: Admin can create any role. Boku_Access can only create Client_Access. Data must be valid.
-      allow create: if (isClientAdmin(clientId) || (isBokuAccess(clientId) && request.resource.data.role == 'Client_Access'))
-                    && isPortalUserDataValidOnCreate(clientId, portalUserId);
-
-      // Update: Owner can update self. Admin can update anyone. Boku_Access can update Client_Access. Data and roles must be valid.
-      allow update: if (isOwner(portalUserId) || isClientAdmin(clientId) || (isBokuAccess(clientId) && resource.data.role == 'Client_Access')) 
-                    && arePortalUserFieldsValidOnUpdate(clientId);
-      
-      // Delete: Admin can delete anyone (but not themselves). Boku_Access can delete Client_Access.
-      allow delete: if (isClientAdmin(clientId) && !isOwner(portalUserId)) || 
-                     (isBokuAccess(clientId) && resource.data.role == 'Client_Access');
-=======
       // Admins and Boku_Access can get any user doc, others can only get their own.
       allow get: if isOwner(portalUserId) || isAdmin(clientId) || isBokuAccess(clientId);
       // Admins and Boku_Access can list all users in the client.
@@ -207,7 +132,6 @@ service cloud.firestore {
       // Admins can delete anyone but themselves. Boku_Access can only delete Client_Access users.
       allow delete: if (isAdmin(clientId) && !isOwner(portalUserId)) || 
                      (isBokuAccess(clientId) && resource.data.role == 'Client_Access' && !isOwner(portalUserId));
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
     }
     
     match /oauth_states/{stateId} {
@@ -215,18 +139,10 @@ service cloud.firestore {
     }
 
     match /clients/{clientId}/quickBooksIntegration/{quickBooksIntegrationId} {
-<<<<<<< HEAD
-      allow get: if isClientAdmin(clientId);
-      allow list: if isClientAdmin(clientId);
-      allow create: if true;
-=======
       allow get: if isClientMember(clientId);
       allow list: if isClientMember(clientId);
       allow create: if isAdmin(clientId) || isBokuAccess(clientId);
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
       allow update, delete: if false;
     }
   }
 }
-
-    

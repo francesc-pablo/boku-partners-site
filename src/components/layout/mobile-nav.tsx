@@ -31,17 +31,12 @@ export function MobileNav({ navLinks }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
-<<<<<<< HEAD
   const { auth } = useFirebase();
-=======
-  const auth = useAuth();
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
-
->>>>>>> e12348c6ac157baa544cc18bb67c031b9e88b544
 
   const handleLogout = async () => {
     if (auth) {

@@ -358,9 +358,15 @@ export function UserTable({ adminUser, showAddUserDialog, setShowAddUserDialog }
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {adminUser.role === 'Admin' && <SelectItem value="Admin">Admin</SelectItem>}
-                                    {adminUser.role === 'Admin' && <SelectItem value="Boku_Access">Boku Access</SelectItem>}
-                                    <SelectItem value="Client_Access">Client Access</SelectItem>
+                                     {adminUser.role === 'Admin' ? (
+                                        <>
+                                            <SelectItem value="Admin">Admin</SelectItem>
+                                            <SelectItem value="Boku_Access">Boku Access</SelectItem>
+                                            <SelectItem value="Client_Access">Client Access</SelectItem>
+                                        </>
+                                    ) : (
+                                        <SelectItem value="Client_Access">Client Access</SelectItem>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>

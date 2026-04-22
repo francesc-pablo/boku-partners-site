@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import { App } from 'firebase-admin/app';
+import { firebaseConfig } from '@/firebase/config';
 
 let app: App;
 
@@ -35,6 +36,38 @@ function initializeAdminSDK() {
     return admin.initializeApp();
   } catch (error: any) {
     console.error("FIREBASE ADMIN SDK INITIALIZATION ERROR:", error.message);
+
+    // Check if running in a development environment to provide a more helpful error.
+    if (process.env.NODE_ENV !== 'production' && (error.message.includes('Could not load the default credentials') || error.message.includes('Unable to detect a Project Id'))) {
+        const devErrorMessage = `
+********************************************************************************
+Firebase Admin SDK initialization failed for local development.
+This is because your local server environment is not authenticated.
+
+To fix this, you need to provide service account credentials via a .env.local file.
+
+1. Create a file named .env.local in the root of your project.
+2. Go to your Firebase Project Settings > Service accounts:
+   https://console.firebase.google.com/project/${firebaseConfig.projectId}/settings/serviceaccounts/adminsdk
+3. Click "Generate new private key" to download the JSON credentials file.
+4. Copy the following values from the JSON file into your .env.local file:
+
+   FIREBASE_ADMIN_PROJECT_ID="${firebaseConfig.projectId}"
+   FIREBASE_ADMIN_CLIENT_EMAIL="<your-client-email>"
+   FIREBASE_ADMIN_PRIVATE_KEY="<your-private-key>"
+
+   IMPORTANT: For the private key, copy the entire string, including "-----BEGIN..." and "...END-----", and wrap it in double quotes.
+
+5. You will also need your QuickBooks client secret for the integration to work:
+   QB_CLIENT_SECRET="<your-quickbooks-client-secret>"
+
+6. After creating the .env.local file, restart your development server.
+********************************************************************************
+Original error: ${error.message}
+`;
+        throw new Error(devErrorMessage);
+    }
+    
     throw new Error(
       'Firebase Admin SDK initialization failed. This is likely due to missing or incorrect environment variables on your production server. ' +
       'Please ensure that FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY are correctly set. ' +

@@ -57,20 +57,31 @@ const ReportRow = ({ row, level = 0, columnsCount }: { row: any; level?: number;
 
   return (
     <>
-      <TableRow className={cn(isHeader && "bg-muted/60", isSummary && "bg-muted/80", !isHeader && !isSummary && "hover:bg-muted/40")}>
-        {paddedContent.map((col: any, index: number) => (
-          <TableCell
-            key={index}
-            className={cn(
-              "p-2 whitespace-nowrap border-r last:border-r-0",
-              (isHeader || isSummary) && "font-bold",
-              index > 0 && "text-right font-mono"
-            )}
-            style={{ paddingLeft: index === 0 ? `${0.75 + level * 1.25}rem` : '0.5rem' }}
-          >
-            {formatCell(col?.value, index > 0)}
-          </TableCell>
-        ))}
+      <TableRow className={cn("group", isHeader && "bg-muted/60", isSummary && "bg-muted/80", !isHeader && !isSummary && "hover:bg-muted/40")}>
+        {paddedContent.map((col: any, index: number) => {
+          const isFirstColumn = index === 0;
+          return (
+            <TableCell
+              key={index}
+              className={cn(
+                "p-2 whitespace-nowrap border-r last:border-r-0",
+                (isHeader || isSummary) && "font-bold",
+                !isFirstColumn && "text-right font-mono",
+                isFirstColumn && "sticky left-0",
+                isFirstColumn && (
+                  isHeader 
+                  ? "bg-muted/60" 
+                  : isSummary 
+                  ? "bg-muted/80" 
+                  : "bg-background group-hover:bg-muted/40"
+                )
+              )}
+              style={{ paddingLeft: isFirstColumn ? `${0.75 + level * 1.25}rem` : '0.5rem' }}
+            >
+              {formatCell(col?.value, !isFirstColumn)}
+            </TableCell>
+          );
+        })}
       </TableRow>
       {subRows?.map((subRow, i) => (
         <ReportRow key={i} row={subRow} level={level + 1} columnsCount={columnsCount} />
@@ -105,8 +116,11 @@ const ReportTable = ({ data }: { data: ReportData }) => {
       <Table className="min-w-max text-sm">
         <thead className="sticky top-0 bg-background/80 backdrop-blur-sm z-10">
           <TableRow className="hover:bg-transparent">
-            {columns.map((col: any) => (
-              <th key={col.ColTitle} className="p-2 border-b text-left font-semibold whitespace-nowrap border-r last:border-r-0">
+            {columns.map((col: any, index: number) => (
+              <th key={col.ColTitle} className={cn(
+                "p-2 border-b text-left font-semibold whitespace-nowrap border-r last:border-r-0",
+                index === 0 && "sticky left-0 bg-background/80"
+              )}>
                 {col.ColTitle}
               </th>
             ))}

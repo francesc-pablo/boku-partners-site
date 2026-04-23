@@ -70,10 +70,10 @@ const ReportRow = ({ row, level = 0, columnsCount }: { row: any; level?: number;
                 isFirstColumn && "sticky left-0",
                 isFirstColumn && (
                   isHeader 
-                  ? "bg-muted/60" 
+                  ? "bg-muted" 
                   : isSummary 
-                  ? "bg-muted/80" 
-                  : "bg-background group-hover:bg-muted/40"
+                  ? "bg-muted" 
+                  : "bg-background group-hover:bg-muted"
                 )
               )}
               style={{ paddingLeft: isFirstColumn ? `${0.75 + level * 1.25}rem` : '0.5rem' }}
@@ -114,12 +114,12 @@ const ReportTable = ({ data }: { data: ReportData }) => {
   return (
      <div className="h-full overflow-auto rounded-lg border">
       <Table className="min-w-max text-sm">
-        <thead className="sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+        <thead className="sticky top-0 bg-background z-10">
           <TableRow className="hover:bg-transparent">
             {columns.map((col: any, index: number) => (
               <th key={col.ColTitle} className={cn(
                 "p-2 border-b text-left font-semibold whitespace-nowrap border-r last:border-r-0",
-                index === 0 && "sticky left-0 bg-background/80"
+                index === 0 && "sticky left-0 bg-background"
               )}>
                 {col.ColTitle}
               </th>

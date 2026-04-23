@@ -114,12 +114,12 @@ const ReportTable = ({ data }: { data: ReportData }) => {
   return (
      <div className="h-full overflow-auto rounded-lg border">
       <Table className="min-w-max text-sm">
-        <thead className="sticky top-0 bg-background z-10">
+        <thead className="sticky top-0 bg-background/80 backdrop-blur-sm z-10">
           <TableRow className="hover:bg-transparent">
             {columns.map((col: any, index: number) => (
               <th key={col.ColTitle} className={cn(
                 "p-2 border-b text-left font-semibold whitespace-nowrap border-r last:border-r-0",
-                index === 0 && "sticky left-0 bg-background"
+                index === 0 && "sticky left-0 bg-background/80 backdrop-blur-sm"
               )}>
                 {col.ColTitle}
               </th>
